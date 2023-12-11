@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+
+    /* Modules */
+    "module": "ESNext",
+    "rootDir": "src/",
+    "moduleResolution": "Node",
+    "baseUrl": "./",
+    //"paths": {},
+    "rootDirs": ["src/"],
+    "typeRoots": ["node_modules", "node_modules/@types", "@types"],
+    "types": ["foundry", "fvtt-cof", "fvtt-token-action-hud-core", "jquery", "node"],
+    "resolveJsonModule": true,
+
+    /* JavaScript Support */
+    "allowJs": true,
+
+    /* Emit */
+    "sourceMap": false,
+    "inlineSourceMap": true,
+    "removeComments": true,
+    "outDir": "dist/",
+    "declaration": true,
+    "declarationDir": "dist/types/",
+
+    /* Interop Constraints */
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Type Checking */
+    "strict": true,
+
+    /* Completeness */
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/"],
+  "exclude": ["node_modules/"],
+  "compileOnSave": false
+}

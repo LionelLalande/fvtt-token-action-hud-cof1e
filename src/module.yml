@@ -1,0 +1,61 @@
+---
+id: token-action-hud-cof
+title: Token Action HUD for Chroniques Oubliées Fantasy
+description: Token Action HUD is a repositionable HUD of actions for a selected token
+version: 0.0.0-dev
+url: This is auto replaced
+manifest: This is auto replaced
+download: This is auto replaced
+readme: This is auto replaced
+license: This is auto replaced
+bugs: This is auto replaced
+changelog: This is auto replaced
+
+authors:
+  - name: LionelL2
+    #url: YOUR WEBSITE ADDRESS HERE
+    #email: YOUR EMAIL ADDRESS HERE
+    #discord: YOUR DISCORD USERNAME HERE
+
+#media:
+#- type: setup
+#  url: /modules/token-action-hud-cof/assets/cover.webp
+#  thumbnail: /modules/token-action-hud-cof/assets/thumbnail.webp
+
+esmodules:
+  - index.esm.js
+#scripts:
+#- index.js
+styles:
+  - styles.css
+
+languages:
+  #- lang: en
+  #  name: English
+  #  path: /langs/en.json
+  - lang: fr
+    name: Français
+    path: /langs/fr.json
+
+compatibility:
+  minimum: 11
+  verified: '11.307'
+  maximum: 11
+
+relationships:
+  requires:
+    - id: token-action-hud-core
+      type: module
+      compatibility:
+        minimum: '1.5.0'
+        verified: '1.5.2'
+  recommends: []
+  conflicts: []
+  systems:
+    - id: cof
+      type: system
+      compatibility:
+        minimum: '11.300'
+        verified: '11.313.1'
+
+packs: []

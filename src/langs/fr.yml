@@ -1,2 +1,14 @@
 tokenActionHud:
-  cof: {}
+  cof:
+    Combat:
+      Skills: Compétences
+    Items: Objets
+    Effects:
+      Name: Effets
+      Passive: Effets passifs
+      Temporary: Effets temporaires
+    Weapons: Armes
+    Settings:
+      AbbreviateSkills:
+        Name: Caractéristiques en abrégé
+        Hint: Afficher les noms courts des caractéristiques (les 3 premiers caractères en majuscules)

@@ -1,0 +1,118 @@
+name: Checks
+
+on:
+  - push
+  - pull_request
+
+env:
+  node_version: 21.1.0
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+          cache: yarn
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Lint
+        run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Test
+        run: yarn test:ci
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Typecheck
+        run: yarn typecheck
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Build
+        run: yarn build

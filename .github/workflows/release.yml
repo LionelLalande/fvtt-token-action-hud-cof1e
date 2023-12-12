@@ -1,0 +1,178 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+env:
+  node_version: 21.1.0
+  package_type: module
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+          cache: yarn
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Lint
+        run: yarn lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Test
+        run: yarn test:ci
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Typecheck
+        run: yarn typecheck
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install node ${{ env.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+
+      - name: Cache modules
+        uses: actions/cache@v3
+        id: cache-modules
+        with:
+          path: .yarn/cache
+          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-
+
+      - name: Install dependencies
+        run: yarn
+
+      - name: Extract tag version number
+        id: get_version
+        uses: battila7/get-version-action@v2
+
+      - name: Build
+        run: yarn build
+
+      - name: Substitute Manifest and Download Links For Versioned Ones
+        id: sub_manifest_link_version
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'dist/${{ env.package_type }}.json'
+        env:
+          version: ${{ steps.get_version.outputs.version-without-v }}
+          url: https://github.com/${{ github.repository }}
+          manifest: https://github.com/${{ github.repository }}/releases/latest/download/${{ env.package_type }}.json
+          download: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/${{ env.package_type }}.zip
+          readme: https://github.com/${{ github.repository }}/README.md
+          license: https://github.com/${{ github.repository }}/LICENSE
+          bugs: https://github.com/${{ github.repository }}/issues
+          changelog: https://github.com/${{ github.repository }}/CHANGELOG
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+  publish:
+    needs:
+      - lint
+      - test
+      - typecheck
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download production artifacts for publication
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+      - name: Create zip file
+        working-directory: ./dist
+        run: zip -r ../${{ env.package_type }}.zip .
+
+      - name: Create release
+        id: create_version_release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          name: ${{ github.event.release.name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: './dist/${{ env.package_type }}.json, ./${{ env.package_type }}.zip'
+          body: ${{ github.event.release.body }}

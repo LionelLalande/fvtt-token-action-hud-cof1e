@@ -90,6 +90,17 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
         case 'attack':
           await actor.rollWeapon(<number>actionId);
           break;
+
+        case 'effect':
+        case 'effects':
+          const effect = actor.effects?.get(actionId);
+          if (!effect) return;
+
+          const updates = actor.effects?.map((effect) => {
+            return { _id: effect.id, disabled: !effect.disabled };
+          });
+          await actor.updateEmbeddedDocuments('ActiveEffect', [...updates]);
+          Hooks.callAll('forceUpdateTokenActionHud');
       }
     }
 

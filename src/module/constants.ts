@@ -77,3 +77,8 @@ export const CAPACITY_TYPE: { [key: string]: { groupId: string } } = {
   other: { groupId: 'capacities-other' },
   profile: { groupId: 'capacities-profile' },
 };
+
+export const EFFECT_TYPE: { [key: string]: { groupId: string } } = {
+  passive: { groupId: 'passive-effects' },
+  temporary: { groupId: 'temporary-effects' },
+};

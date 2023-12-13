@@ -3,7 +3,7 @@
 /// <reference Path="../../@types/fvtt-cof/index.d.ts" />
 
 ////import { AnyActor } from '@types/foundry/client/documents/token-document';
-import { ACTION_ICON, ACTION_TYPE, ATTACK_TYPE, CAPACITY_TYPE, ITEM_TYPE } from './constants';
+import { ACTION_ICON, ACTION_TYPE, ATTACK_TYPE, CAPACITY_TYPE, EFFECT_TYPE, ITEM_TYPE } from './constants';
 
 export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: typeof Utils) {
   return class CofActionHandler extends coreModule.api.ActionHandler<CofActor, CofToken> {
@@ -96,6 +96,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         this.#buildCapacities(),
         this.#buildInventory(),
         this.#buildToken(),
+        this.#buildEffects(),
       ]);
     }
 
@@ -108,13 +109,19 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         this.#buildCapacities(),
         this.#buildInventory(),
         this.#buildToken(),
+        this.#buildEffects(),
       ]);
     }
 
     /** Build multiple controlled tokens actions. */
     async #buildMultipleTokenActions() {
       // eslint-disable-next-line prettier/prettier
-      await Promise.all([this.#buildAttributesStats(), this.#buildCombatSkills(), this.#buildToken()]);
+      await Promise.all([
+        this.#buildAttributesStats(),
+        this.#buildCombatSkills(),
+        this.#buildToken(),
+        this.#buildEffects(),
+      ]);
     }
 
     async #buildAttributesStats() {
@@ -216,7 +223,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         const groupId = ATTACK_TYPE[actionType]?.groupId;
         if (!groupId) continue;
         const groupData = { id: groupId, type: 'system' };
-        console.debug('COF-TAH Debug | ', actionType, groupData);
+        console.debug('COF-TAH Debug |', actionType, groupData);
 
         // Get actions
         const actions = await Promise.all(
@@ -475,6 +482,57 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
 
       const groupData = { id: 'combat', type: 'system' };
       this.addActions(actions, groupData);
+    }
+
+    async #buildEffects() {
+      const effects = this.actor.effects;
+      if (effects.size === 0) return;
+
+      const effectsMap = new Map<string, ActiveEffect<CofActor>[]>();
+
+      effects?.forEach((effect) => {
+        const itemType = effect.isTemporary ? 'temporary' : 'passive';
+        const groupId = EFFECT_TYPE[itemType]?.groupId;
+        if (!groupId) return;
+
+        const effects = effectsMap.get(groupId) ?? [];
+        effects.push(effect);
+        effectsMap.set(groupId, effects);
+      });
+
+      const actionType = 'effects';
+
+      // Loop through attack group ids
+      for (const [groupId, effect] of effectsMap) {
+        // Create group data
+        const groupData = { id: groupId, type: 'system' };
+
+        // Get actions
+        const actions = await Promise.all(
+          [...effect].map(async (effect) => {
+            const id = `${groupId}_${actionType}_${effect._id}`;
+            const name = effect.name;
+            const encodedValue = [actionType, effect._id].join(this.delimiter);
+            const active = effect.disabled ? '' : ' active';
+            const cssClass = `toggle${active}`;
+            const img = coreModule.api.Utils.getImage(effect);
+            const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+            const listName = `${actionTypeName}${name}`;
+
+            return {
+              id,
+              name,
+              encodedValue,
+              cssClass,
+              img,
+              listName,
+            };
+          }),
+        );
+
+        // Add actions to action list
+        this.addActions(actions, groupData);
+      }
     }
 
     #getActionId(entity: CofItem /*, actionType?: string /*, spellLevel*/): string {

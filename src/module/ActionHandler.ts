@@ -526,16 +526,18 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         return { text: quantity };
       }
 
-      if ('system' in item && item.system.mod && 'skillBonus' in item.system) {
-        const value = item.system.mod + <number>item.system.skillBonus;
-        const mod = value < 0 ? value : '+' + value;
-        return { text: mod };
+      if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system) {
+        const skillMod0 = eval('item.actor.system.' + (<string>item.system.skill).split('@')[1]) ?? 0;
+        const skillMod1 = Number(item.system.skillBonus) ?? 0;
+        const skillMod = skillMod0 + skillMod1;
+        const text = skillMod < 0 ? skillMod : '+' + skillMod;
+        return { text };
       }
 
       // encounter attack/weapon or skill
       if ('mod' in item) {
-        const mod = item.mod < 0 ? item.mod : '+' + item.mod;
-        return { text: mod };
+        const text = item.mod < 0 ? item.mod : '+' + item.mod;
+        return { text };
       }
     }
 

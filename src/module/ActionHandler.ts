@@ -216,7 +216,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         const groupId = ATTACK_TYPE[actionType]?.groupId;
         if (!groupId) continue;
         const groupData = { id: groupId, type: 'system' };
-        console.debug('COF-TAH Debug |  ', actionType, groupData);
+        console.debug('COF-TAH Debug | ', actionType, groupData);
 
         // Get actions
         const actions = await Promise.all(
@@ -248,7 +248,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
           }),
         );
 
-        console.debug('COF-TAH Debug |  Attacks', actions);
+        console.debug('COF-TAH Debug | attacks', actions);
 
         // Add actions to action list
         this.addActions(actions, groupData);
@@ -293,7 +293,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         }),
       );
 
-      console.debug('COF-TAH Debug |  Attacks', attacks, actions);
+      console.debug('COF-TAH Debug | encounter attacks', attacks, actions);
 
       // Create group data
       const groupData = { id: 'combat-attacks', type: 'system' };

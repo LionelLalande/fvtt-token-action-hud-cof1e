@@ -34,7 +34,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       token: CofToken,
       actionId: string | number,
     ) {
-      console.debug('COF-TAH Debug |  handle action', actionType, actionId);
+      console.debug('COF-TAH Debug | handle action', actionType, actionId);
 
       const item: CofItem = actor.items.find((item) => item._id == actionId)!;
       const isShiftPressed = event.shiftKey;

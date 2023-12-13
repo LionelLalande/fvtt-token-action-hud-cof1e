@@ -584,8 +584,11 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         return { text: quantity };
       }
 
-      if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system) {
-        const skillMod0 = eval('item.actor.system.' + (<string>item.system.skill).split('@')[1]) ?? 0;
+      if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system && item.system.skill) {
+        let skillName = <string>item.system.skill;
+        skillName = skillName.split('@')[1];
+        if (!skillName) return;
+        const skillMod0 = this.#getValue<number>(item.actor.system, skillName) ?? 0;
         const skillMod1 = Number(item.system.skillBonus) ?? 0;
         const skillMod = skillMod0 + skillMod1;
         const text = skillMod < 0 ? skillMod : '+' + skillMod;
@@ -597,6 +600,18 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         const text = item.mod < 0 ? item.mod : '+' + item.mod;
         return { text };
       }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #getValue<T extends number | string | null>(instance: any, path: string): T {
+      const parts = path.split('.');
+      for (const part of parts) {
+        if (part in instance) {
+          instance = instance[part];
+        }
+      }
+
+      return <T>instance;
     }
 
     #getActionIcon(action: string) {

@@ -93,7 +93,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
 
         case 'effect':
         case 'effects':
-          const effect = actor.effects?.get(actionId);
+          const effect = actor.effects?.get(<string>actionId);
           if (!effect) return;
 
           const updates = actor.effects?.map((effect) => {

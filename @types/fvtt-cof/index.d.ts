@@ -131,6 +131,10 @@ declare global {
       consumable: boolean;
       ranged: boolean;
       activable: boolean;
+      limitedUsage:{
+        maxUse:number;
+        use: number;
+      }
     };
     limited: boolean;
     limitedUsage: boolean;

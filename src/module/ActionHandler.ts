@@ -345,7 +345,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const icon1 = ''; ////this.#getIcon1(itemData /*, actionType*/);
             const icon2 = this.#getCarryTypeIcon(itemData);
             const img = coreModule.api.Utils.getImage(itemData);
-            const info1 = this.#getItemInfo(itemData);
+            const info1 = this.#getItemInfo(itemData, true);
             ////const tooltipData = null; ////await this.#getTooltipData(actionType, itemData);
             const tooltip: string | null = null; ////await this.#getTooltip(actionType, tooltipData);
             return <Action>{
@@ -578,10 +578,19 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       }
     }
 
-    #getItemInfo(item: CofItem | { mod: number }, useQuantity: boolean = false) {
-      if (useQuantity && 'system' in item && item.system?.qty) {
+    #getItemInfo(item: CofItem | { mod: number }, useQuantityIfAvailable: boolean = false) {
+      if (useQuantityIfAvailable && 'system' in item) {
+        if (item.system?.qty) {
         const quantity = item.system.qty || item.system.qty > 1 ? `(${item.system.qty})` : '';
         return { text: quantity };
+        }
+        if (item.system?.properties.limitedUsage) {
+          const max = item.system?.properties.limitedUsage.maxUse;
+          if (max > 0) {
+            const quantity = item.system?.properties.limitedUsage.use;
+            return { text: `(${quantity}/${max})` };
+          }
+        }
       }
 
       if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system && item.system.skill) {

@@ -119,6 +119,7 @@ declare global {
   };
 
   export type CofItemSystemSource = {
+    activable: boolean;
     actionType: { value: string; };
     actions: { value: string; };
     description: string;

@@ -343,7 +343,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const cssClass = this.#getActionCss(itemData);
             const encodedValue = [actionType, id].join(this.delimiter);
             const icon1 = ''; ////this.#getIcon1(itemData /*, actionType*/);
-            const icon2 = this.#getCarryTypeIcon(itemData);
+            const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
             const img = coreModule.api.Utils.getImage(itemData);
             const info1 = this.#getItemInfo(itemData, true);
             ////const tooltipData = null; ////await this.#getTooltipData(actionType, itemData);
@@ -404,7 +404,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const encodedValue = [actionType, itemData.id ?? itemData._id].join(this.delimiter);
             const img = coreModule.api.Utils.getImage(itemData);
             const icon1 = this.#getIcon1(<CofItem & { actionIcon: string }>itemData /*, actionType*/);
-            const icon2 = this.#getCarryTypeIcon(itemData);
+            const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
             const info1 = this.#getItemInfo(itemData, true);
             ////const tooltipData = null; ////await this.#getTooltipData(actionType, itemData);
             const tooltip: string | null = null; ////await this.#getTooltip(actionType, tooltipData);
@@ -578,11 +578,18 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       }
     }
 
+    #getActivableTypeIcon(item?: CofItem) {
+      const activable = item?.system.activable;
+      if (activable) {
+        return '<i class="fas fa-check"></i>';
+      }
+    }
+
     #getItemInfo(item: CofItem | { mod: number }, useQuantityIfAvailable: boolean = false) {
       if (useQuantityIfAvailable && 'system' in item) {
         if (item.system?.qty) {
-        const quantity = item.system.qty || item.system.qty > 1 ? `(${item.system.qty})` : '';
-        return { text: quantity };
+          const quantity = item.system.qty || item.system.qty > 1 ? `(${item.system.qty})` : '';
+          return { text: quantity };
         }
         if (item.system?.properties.limitedUsage) {
           const max = item.system?.properties.limitedUsage.maxUse;

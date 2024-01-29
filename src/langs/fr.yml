@@ -2,6 +2,8 @@ tokenActionHud:
   cof:
     Combat:
       Skills: Compétences
+      Utils: Utilitaires
+      rollInitiative: Initiative
     Items: Objets
     Effects:
       Name: Effets

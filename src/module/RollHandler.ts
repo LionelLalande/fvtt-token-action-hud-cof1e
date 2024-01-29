@@ -36,7 +36,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
     ) {
       console.debug('COF-TAH Debug | handle action', actionType, actionId);
 
-      const item: CofItem = actor.items.find((item) => item._id == actionId)!;
+      const item: CofItem = actor.items.get(<string>actionId)!;
       const isShiftPressed = event.shiftKey;
       const isCtrlPressed = event.ctrlKey;
       const isRightClick = event.button === 2;
@@ -60,17 +60,13 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       switch (actionType) {
         case 'stat':
         case 'stats':
-          await actor.rollStat(<string>actionId);
-          break;
-
         case 'skill':
-          // TODO add bonus for attributes skills (but not for combat skill)
-          await actor.rollStat(<string>actionId);
+          await actor.rollStat(<string>actionId, { dialog: !isShiftPressed });
           break;
 
         case 'melee':
         case 'ranged':
-          await actor.rollWeapon(item, { dialog: true });
+          await actor.rollWeapon(item, { dialog: !isShiftPressed });
           break;
 
         case 'item':
@@ -84,11 +80,22 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           break;
 
         case 'capacity':
-          await item.applyEffects(actor);
+          actor.activateCapacity(item);
           break;
 
         case 'attack':
-          await actor.rollWeapon(<number>actionId);
+          // for monsters/encounters
+          await actor.rollWeapon(
+            /*weaponId:*/ <number>actionId,
+            /*customLabel:*/ undefined,
+            /*dmgOnly:*/ undefined,
+            /*bonus:*/ undefined,
+            /*malus: */ undefined,
+            /*dmgMalus:*/ undefined,
+            /*skillDesc:*/ undefined,
+            /*dmgDescr:*/ undefined,
+            /*dialog:*/ !isShiftPressed,
+          );
           break;
 
         case 'effect':
@@ -101,6 +108,25 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           });
           await actor.updateEmbeddedDocuments('ActiveEffect', [...updates]);
           Hooks.callAll('forceUpdateTokenActionHud');
+          break;
+
+        case 'combat':
+          if (token?.inCombat) {
+            const { combat } = game;
+            switch (actionId) {
+              case 'initiative':
+                const combatant = combat.getCombatantByToken(token.id);
+                await combat.rollInitiative(combatant.id);
+                break;
+
+              case 'endTurn':
+                await combat.nextTurn();
+                break;
+            }
+
+            Hooks.callAll('forceUpdateTokenActionHud');
+          }
+          break;
       }
     }
 

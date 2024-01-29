@@ -13,7 +13,9 @@ let DEFAULTS: {
 
 export function initDefaults(coreModule: TokenActionHudCoreModule) {
   const groups: {
+    // attributes
     attributesStats: Group;
+    // combat
     combatSkills: Group;
     combatAttacks: Group;
     combatMelee: Group;
@@ -21,23 +23,28 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
     combatMagic: Group;
     combatShields: Group;
     combatArmors: Group;
+    combatUtils: Group;
+    // inventory
     inventoryWeapons: Group;
     inventoryProtections: Group;
     inventoryContainers: Group;
     inventoryConsumables: Group;
     inventoryEquipment: Group;
+    // capacities
     capacitiesRacial: Group;
     capacitiesProfile: Group;
     capacitiesOther: Group;
+    // effects
     temporaryEffects: Group;
     passiveEffects: Group;
+    // utilities
     token: Group;
     [key: string]: Group;
   } = GROUPS;
 
   Object.values(groups).forEach((group: Group) => {
     group.name = coreModule.api.Utils.i18n(group.name);
-    group.listName = `${coreModule.api.Utils.i18n('tokenActionHud.Group')}: ${coreModule.api.Utils.i18n(group.name)}`;
+    group.listName = `${coreModule.api.Utils.i18n('Group')}: ${coreModule.api.Utils.i18n(group.name)}`;
   });
 
   const groupsArray = Object.values(groups);
@@ -66,6 +73,7 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
           { ...groups.combatRanged, nestId: 'combat_ranged' },
           { ...groups.combatMagic, nestId: 'combat_magic' },
           { ...groups.combatShields, nestId: 'combat_shields' },
+          { ...groups.combatUtils, nestId: 'combat_utils' },
         ],
       },
       {

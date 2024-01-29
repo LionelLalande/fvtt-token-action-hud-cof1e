@@ -18,6 +18,7 @@ export const GROUPS = {
   combatMagic: { id: 'combat-magic', name: 'COF.attacks.magic.label', type: 'system' },
   combatShields: { id: 'combat-shields', name: 'COF.armors.shield', type: 'system' },
   combatArmors: { id: 'combat-armors', name: 'COF.category.armor-plural', type: 'system' },
+  combatUtils: { id: 'combat-utils', name: 'tokenActionHud.cof.Combat.Utils', type: 'system' },
   inventoryWeapons: { id: 'inventory-weapons', name: 'tokenActionHud.cof.Weapons', type: 'system' },
   inventoryProtections: { id: 'inventory-protections', name: 'COF.properties.protection', type: 'system' },
   inventoryContainers: { id: 'inventory-containers', name: 'COF.category.container', type: 'system' },
@@ -44,6 +45,7 @@ export const ACTION_TYPE: { [key: string]: string } = {
   ranged: 'COF.category.ranged',
   shield: 'COF.category.shield',
   spell: 'COF.attacks.magic.label',
+  combat: 'COF.tabs.combat',
 };
 
 export const ACTION_ICON: { [key: string]: string } = {

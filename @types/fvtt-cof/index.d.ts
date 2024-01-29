@@ -40,11 +40,13 @@ declare global {
 
     get token(): TParent;
 
+    activateCapacity(capacity: CofItem, options?: { bonus?: number; malus?: number; dialog?: boolean } ): Promise<void>;
     consumeItem(item: CofItem): CofItem;
     getMalusFromArmor(): number;
     getOverloadedMalusTotal(): number;
-    rollStat(stat: string, options?: { bonus?: number; malus?: number } ): Promise<void>;
+    rollStat(stat: string, options?: { bonus?: number; malus?: number, dialog?: boolean } ): Promise<void>;
     rollWeapon(item: CofItem, options?: { bonus?: number; malus?: number; dialog?: boolean } ): Promise<void>;
+    // for monsters/encounters
     rollWeapon(
       weaponId: number,
       customLabel?: string,
@@ -64,6 +66,8 @@ declare global {
     system: CofItemSystemSource;
 
     applyEffects(actor: CofActor, options?: { bonus?: number; malus?: number; dialog?: boolean }): Promise<void>;
+    modifyQuantity(increment: number, isDecrese: boolean);
+    modifyUse(increment: number, isDecrese: boolean);
 
     // Item Macro
     hasMacro(): boolean;

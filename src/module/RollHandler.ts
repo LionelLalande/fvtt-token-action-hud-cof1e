@@ -72,10 +72,13 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
         case 'item':
           const equipable = item.system.properties.equipable;
           const consumable = item.system.properties.consumable;
-          if (consumable) {
+          const stackable = item.system.properties.stackable;
+          if (equipable) {
+            actor.toggleEquipItem(item, isShiftPressed);
+          } else if (consumable) {
             actor.consumeItem(item);
-          } else if (equipable) {
-            actor.toggleEquipItem(item, game.user.isGM && isShiftPressed);
+          } else if (stackable) {
+            item.modifyQuantity(1, true);
           }
           break;
 

@@ -600,8 +600,8 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
           const text = system.qty > 1 ? `[${system.qty}]` : '';
           return { text };
         }
-        }
       }
+    }
 
     #getItemMod(item: CofItem | { mod: number }) {
       if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system && item.system.skill) {

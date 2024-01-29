@@ -136,6 +136,7 @@ declare global {
       consumable: boolean;
       ranged: boolean;
       activable: boolean;
+      stackable: boolean;
       limitedUsage:{
         maxUse:number;
         use: number;

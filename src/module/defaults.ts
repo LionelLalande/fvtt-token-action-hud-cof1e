@@ -6,7 +6,19 @@ let DEFAULTS: {
     id: string;
     nestId: string;
     name: string;
-    groups: { id: string; name: string; type: string; nestId: string }[];
+    settings?: {
+      customWidth?: number;
+      grid?: boolean;
+      showTitle?: boolean;
+      image?: string;
+      style?: 'tab' | 'grid';
+    };
+    groups: {
+      id: string;
+      name: string;
+      type: string;
+      nestId: string;
+    }[];
   }[];
   groups: Group[];
 };
@@ -57,9 +69,12 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
         nestId: 'attributes',
         id: 'attributes',
         name: coreModule.api.Utils.i18n('COF.tabs.stats'),
+        settings: {
+          customWidth: 800,
+        },
         groups: [
           { ...groups.attributesStats, nestId: 'attributes_stats' },
-          { ...groups.attributesSkills, nestId: 'attributes_skills' },
+          //{ ...groups.attributesSkills, nestId: 'attributes_skills' },
         ],
       },
       {

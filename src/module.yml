@@ -1,6 +1,6 @@
 ---
-id: token-action-hud-cof
-title: Token Action HUD COF
+id: token-action-hud-cof1e
+title: Token Action HUD COF1e
 description: Token Action HUD is a repositionable HUD of actions for a selected token
 version: 0.0.0-dev
 url: This is auto replaced
@@ -19,8 +19,8 @@ authors:
 
 #media:
 #- type: setup
-#  url: /modules/token-action-hud-cof/assets/cover.webp
-#  thumbnail: /modules/token-action-hud-cof/assets/thumbnail.webp
+#  url: /modules/token-action-hud-cof1e/assets/cover.webp
+#  thumbnail: /modules/token-action-hud-cof1e/assets/thumbnail.webp
 
 esmodules:
   - index.esm.js
@@ -39,7 +39,7 @@ languages:
 
 compatibility:
   minimum: 11
-  verified: '11.307'
+  verified: '11.311'
   maximum: 11
 
 relationships:

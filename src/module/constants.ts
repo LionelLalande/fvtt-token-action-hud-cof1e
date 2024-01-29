@@ -3,7 +3,7 @@ export const REQUIRED_CORE_MODULE_VERSION = '1.5';
 export const MODULES = {
   TokenActionHUD: {
     Core: { ID: 'token-action-hud-core' },
-    COF: { ID: 'token-action-hud-cof' },
+    COF: { ID: 'token-action-hud-cof1e' },
   },
   COF: { ID: 'cof' },
 };

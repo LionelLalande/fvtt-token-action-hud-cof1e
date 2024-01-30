@@ -37,7 +37,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       console.debug('COF-TAH Debug | handle action', actionType, actionId);
 
       const item: CofItem = actor.items.get(<string>actionId)!;
-      const action = this.#getAction(event);
+      const action = this.#getAction(event, actionType);
       switch (action) {
         case 'standard':
           if (item) {
@@ -51,6 +51,11 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           return await this.#execute(actionType, actionId, item);
         case 'alternate':
           return await this.#executeAlt(actionType, actionId, item);
+        case 'dmgOnly':
+          if (actionType === 'attack') {
+            return await this.#executeDmgOnlyForMonster(<number>actionId);
+          }
+          return await this.executeDmgOnly(item);
         case 'openSheet':
           return await this.#openItemSheet(item);
         case 'sendToChat':
@@ -205,7 +210,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       ChatMessage.create(chatData, {});
     }
 
-    #getAction(event: MouseEvent) {
+    #getAction(event: MouseEvent, actionType: string) {
       const leftBtn = event.button === 0;
       const rightBtn = event.button === 2;
       const shift = event.shiftKey;
@@ -220,6 +225,13 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           return 'openSheet';
         case 'false,true,false,false':
           return 'sendToChat';
+        case 'false,true,true,false':
+          switch (actionType) {
+            case 'melee':
+            case 'ranged':
+            case 'attack':
+              return 'dmgOnly';
+          }
       }
     }
   };

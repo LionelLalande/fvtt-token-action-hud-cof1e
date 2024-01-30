@@ -45,7 +45,7 @@ declare global {
     getMalusFromArmor(): number;
     getOverloadedMalusTotal(): number;
     rollStat(stat: string, options?: { bonus?: number; malus?: number, dialog?: boolean } ): Promise<void>;
-    rollWeapon(item: CofItem, options?: { bonus?: number; malus?: number; dialog?: boolean } ): Promise<void>;
+    rollWeapon(item: CofItem, options?: { bonus?: number; malus?: number; dmgOnly?: boolean; dialog?: boolean } ): Promise<void>;
     // for monsters/encounters
     rollWeapon(
       weaponId: number,

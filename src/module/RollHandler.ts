@@ -31,94 +31,85 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       event: MouseEvent,
       actionType: string,
       actor: CofActor,
-      token: CofToken,
+      _token: CofToken,
       actionId: string | number,
     ) {
       console.debug('COF-TAH Debug | handle action', actionType, actionId);
 
       const item: CofItem = actor.items.get(<string>actionId)!;
-      const isShiftPressed = event.shiftKey;
-      const isCtrlPressed = event.ctrlKey;
-      const isRightClick = event.button === 2;
-
-      const hasExtendedActions = ['melee', 'ranged', 'shield', 'item', 'capacity'].includes(actionType);
-      if (hasExtendedActions || isCtrlPressed || isRightClick) {
-        const hasHasMacroFunc = typeof item['hasMacro'] === 'function';
-        const hasExecuteMacroFunc = typeof item['executeMacro'] === 'function';
-        if (hasHasMacroFunc && hasExecuteMacroFunc && item.hasMacro()) {
-          await item.executeMacro(actor);
-          return;
-        } else if (isCtrlPressed) {
-          await this.#showItem(item);
-          return;
-        } else if (isRightClick) {
-          await this.#sendToChatItem(item);
-          return;
-        }
+      const action = this.#getAction(event);
+      switch (action) {
+        case 'standard':
+          if (item) {
+            const hasHasMacroFunc = typeof item['hasMacro'] === 'function';
+            const hasExecuteMacroFunc = typeof item['executeMacro'] === 'function';
+            if (hasHasMacroFunc && hasExecuteMacroFunc && item.hasMacro()) {
+              // execute macro before "normal" execution...
+              await item.executeMacro(actor);
+            }
+          }
+          return await this.#execute(actionType, actionId, item);
+        case 'alternate':
+          return await this.#executeAlt(actionType, actionId, item);
+        case 'openSheet':
+          return await this.#openItemSheet(item);
+        case 'sendToChat':
+          return await this.#sendToChatItem(item);
       }
+    }
 
+    async #execute(actionType: string, actionId: number | string, item: CofItem) {
       switch (actionType) {
         case 'stat':
         case 'stats':
         case 'skill':
-          await actor.rollStat(<string>actionId, { dialog: !isShiftPressed });
-          break;
+          return await this.actor.rollStat(<string>actionId);
 
         case 'melee':
         case 'ranged':
-          await actor.rollWeapon(item, { dialog: !isShiftPressed });
-          break;
+          return await this.actor.rollWeapon(item);
+
+        case 'attack': // encounters/monsters
+          return await this.actor.rollWeapon(/*weaponId:*/ <number>actionId);
+
+        case 'capacity':
+          return await this.actor.activateCapacity(item);
 
         case 'item':
           const equipable = item.system.properties.equipable;
-          const consumable = item.system.properties.consumable;
-          const stackable = item.system.properties.stackable;
           if (equipable) {
-            actor.toggleEquipItem(item, isShiftPressed);
-          } else if (consumable) {
-            actor.consumeItem(item);
-          } else if (stackable) {
-            item.modifyQuantity(1, true);
+            return this.actor.toggleEquipItem(item, false);
           }
-          break;
 
-        case 'capacity':
-          actor.activateCapacity(item);
-          break;
+          const consumable = item.system.properties.consumable;
+          if (consumable) {
+            return this.actor.consumeItem(item);
+          }
 
-        case 'attack':
-          // for monsters/encounters
-          await actor.rollWeapon(
-            /*weaponId:*/ <number>actionId,
-            /*customLabel:*/ undefined,
-            /*dmgOnly:*/ undefined,
-            /*bonus:*/ undefined,
-            /*malus: */ undefined,
-            /*dmgMalus:*/ undefined,
-            /*skillDesc:*/ undefined,
-            /*dmgDescr:*/ undefined,
-            /*dialog:*/ !isShiftPressed,
-          );
+          const stackable = item.system.properties.stackable;
+          if (stackable) {
+            return item.modifyQuantity(1, true);
+          }
           break;
 
         case 'effect':
         case 'effects':
-          const effect = actor.effects?.get(<string>actionId);
+          const effect = this.actor.effects?.get(<string>actionId);
           if (!effect) return;
 
-          const updates = actor.effects?.map((effect) => {
+          const updates = this.actor.effects?.map((effect) => {
             return { _id: effect.id, disabled: !effect.disabled };
           });
-          await actor.updateEmbeddedDocuments('ActiveEffect', [...updates]);
+          await this.actor.updateEmbeddedDocuments('ActiveEffect', [...updates]);
           Hooks.callAll('forceUpdateTokenActionHud');
           break;
 
         case 'combat':
-          if (token?.inCombat) {
+          if (this.token?.inCombat) {
             const { combat } = game;
             switch (actionId) {
               case 'initiative':
-                const combatant = combat.getCombatantByToken(token.id);
+                const combatant = combat.getCombatantByToken(this.token.id);
                 await combat.rollInitiative(combatant.id);
                 break;
 
@@ -133,7 +124,57 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       }
     }
 
-    async #showItem(item: CofItem) {
+    async #executeAlt(actionType: string, actionId: number | string, item: CofItem) {
+      switch (actionType) {
+        case 'stat':
+        case 'stats':
+        case 'skill':
+          return await this.actor.rollStat(<string>actionId, { dialog: false });
+
+        case 'melee':
+        case 'ranged':
+          return await this.actor.rollWeapon(item, { dialog: false });
+
+        case 'attack': // encounters/monsters
+          return await this.actor.rollWeapon(
+            /*weaponId:*/ <number>actionId,
+            /*customLabel:*/ undefined,
+            /*dmgOnly:*/ undefined,
+            /*bonus:*/ undefined,
+            /*malus: */ undefined,
+            /*dmgMalus:*/ undefined,
+            /*skillDesc:*/ undefined,
+            /*dmgDescr:*/ undefined,
+            /*dialog:*/ false,
+          );
+
+        case 'item':
+          const equipable = item.system.properties.equipable;
+          if (equipable) {
+            return this.actor.toggleEquipItem(item, true);
+          }
+      }
+    }
+
+    executeDmgOnly(item: CofItem) {
+      return this.actor.rollWeapon(item, { dmgOnly: true, dialog: false });
+    }
+
+    #executeDmgOnlyForMonster(actionId: number) {
+      return this.actor.rollWeapon(
+        /*weaponId:*/ actionId,
+        /*customLabel:*/ undefined,
+        /*dmgOnly:*/ true,
+        /*bonus:*/ undefined,
+        /*malus:*/ undefined,
+        /*dmgBonus:*/ undefined,
+        /*skillDescr:*/ undefined,
+        /*dmgDescr:*/ undefined,
+        /*dialog:*/ false,
+      );
+    }
+
+    async #openItemSheet(item: CofItem) {
       item.sheet.render(true);
     }
 
@@ -162,6 +203,24 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       };
 
       ChatMessage.create(chatData, {});
+    }
+
+    #getAction(event: MouseEvent) {
+      const leftBtn = event.button === 0;
+      const rightBtn = event.button === 2;
+      const shift = event.shiftKey;
+      const ctrl = event.ctrlKey;
+
+      switch ([leftBtn, rightBtn, shift, ctrl].join(',')) {
+        case 'true,false,false,false':
+          return 'standard';
+        case 'true,false,true,false':
+          return 'alternate';
+        case 'true,false,false,true':
+          return 'openSheet';
+        case 'false,true,false,false':
+          return 'sendToChat';
+      }
     }
   };
 }

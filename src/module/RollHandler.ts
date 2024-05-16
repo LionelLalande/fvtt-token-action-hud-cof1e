@@ -51,6 +51,8 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           return await this.#execute(actionType, actionId, item);
         case 'alternate':
           return await this.#executeAlt(actionType, actionId, item);
+        case 'alternate2':
+          return await this.#executeAlt2(actionType, actionId, item);
         case 'dmgOnly':
           if (actionType === 'attack') {
             return await this.#executeDmgOnlyForMonster(<number>actionId);
@@ -161,6 +163,14 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       }
     }
 
+    async #executeAlt2(actionType: string, _actionId: number | string, item: CofItem) {
+      switch (actionType) {
+        case 'melee':
+        case 'ranged':
+          return await this.actor.rollWeapon(item, { dmgOnly: true });
+      }
+    }
+
     executeDmgOnly(item: CofItem) {
       return this.actor.rollWeapon(item, { dmgOnly: true, dialog: false });
     }
@@ -221,6 +231,8 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           return 'standard';
         case 'true,false,true,false':
           return 'alternate';
+        case 'false,true,false,true':
+          return 'alternate2';
         case 'true,false,false,true':
           return 'openSheet';
         case 'false,true,false,false':

@@ -2,16 +2,21 @@
 
 Token Action HUD est un HUD repositionnable lorsque des tokens sont sélectionnés.
 
-![Downloads](https://img.shields.io/github/downloads/LionelLalande/fvtt-token-action-hud-cof1e/latest/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
+![Downloads](https://img.shields.io/github/downloads/LionelLalande/fvtt-token-action-hud-cof1e/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
 
-*Read this in other languages: [English](README.md)*
+*Read this in other languages: [English](README.en.md)*
 
 ## Fonctionnalités
 
-- Lancez les jets directement depuis le HUD plutôt que depuis la fiche du personnage (utiliser `Shift` en même temps que le clic pour lancer le jet directement sans ouvrir la popup).
-- Équipez ou utilisez les objets de l'inventaire avec un `click`-gauche, ouvrez sa fiche avec `ctrl+click` ou envoyez la description dans le chat avec un `click`-droit.
-- Utilisez les capacités activable avec un `click`-gauche, ouvrez sa fiche avec `ctrl+click` ou envoyez la description dans le chat avec un `click`-droit.
+Utilisez le HUD pour réaliser les actions suivantes (plutôt que depuis la fiche du personnage) :
+
+- Équipez ou utilisez les objets de l'inventaire avec un `clic-gauche`, ouvrez sa fiche avec `ctrl+clic-gauche` ou envoyez la description dans le chat avec un `clic-droit`.
+- Lancez les tests (avec les dommages pour les attaques) avec un simple `clic-gauche` et sans popup avec un `shift+clic-gauche`
+- Lancez seulement les dommages avec un `ctrl+clic-droit` et sans popup avec un `shift+clic-droit`
+- Ouvrez la fiche de l'arme ou de la capacité avec un `ctrl+clic-gauche` ou envoyez sa description dans le chat avec un `clic-droit`.
 - Ajoutez l'acteur au combat dans l'onglet `Utilitaire` ; et déterminer l'initiative et terminez le tour depuis l'onglet `Combat`.
+- Utiliser les capacités activables avec `clic-gauche`, ouvrez sa fiche avec `ctrl+clic-gauche` ou envoyez la description dans le chat avec un `clic-droit`.
+- Activer ou désactiver les effecs avec `clic-gauche`.
 - Modifiez la visibilité du token dans l'onglet `Utilitaire`.
 - Déplacez le HUD et ouvrez les menus au clic ou au survol.
 - Déverouillez le HUD pour personnaliser l'affichage des groupes par utilisateur et des actions par acteur.
@@ -19,7 +24,7 @@ Token Action HUD est un HUD repositionnable lorsque des tokens sont sélectionn�
 
 ## Installation
 
-### 1ère méthode (pas encore disponible)
+### 1ère méthode
 
 1. Dans l'application Foundry VTT's, sur l'écran de **Configuration**, allez sur **Modules**
 2. Cliquez sur **Installer un module**

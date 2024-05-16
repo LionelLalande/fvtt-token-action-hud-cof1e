@@ -2,16 +2,20 @@
 
 Token Action HUD is a repositionable HUD of actions for a selected tokens.
 
-![Downloads](https://img.shields.io/github/downloads/LionelLalande/fvtt-token-action-hud-cof1e/latest/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
+![Downloads](https://img.shields.io/github/downloads/LionelLalande/fvtt-token-action-hud-cof1e/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
 
-*Read this in other languages: [Français](README.fr.md)*
+*Read this in other languages: [Français](README.md)*
 
 ## Features
 
-- Make rolls directly from the HUD instead of opening your character sheet (use `Shift` when clicking the action to roll directly without opening the popup).
-- Equip or use items from the inventory with left-`click`, open its sheet with `ctrl+click` or send it to the chat with right-`click`.
-- Use activable capacities with left-`click`, open its sheet with `ctrl+click` or send it to the chat with right-`click`.
-- Enable or disable effects with `click`.
+Use the HUD to make these actions (instead of opening your character sheet) :
+
+- Equip or use items from the inventory with `left-click`, open its sheet with `ctrl+left-click` or send its description to the chat with `right-click`.
+- Roll tests (with damages for attacks) with `left-click` and without popup with `shift+left-click`
+- Roll damages only with `ctrl+right-click` and without popup with `shift+right-click`
+- Open weapon or capacity sheet with `ctrl+left-click` or send its description to the chat with `right-click`.
+- Use activable capacities with `left-click`, open its sheet with `ctrl+left-click` or send it to the chat with `right-click`.
+- Enable or disable effects with `left-click`.
 - Add actor to combat in the `Utilitaire` tab; then roll initiative and terminate the turn in the `Combat` tab.
 - Toggle visibility of the token in the `Utilitaire` tab.
 - Move the HUD and choose to expand the menus up or down.
@@ -20,7 +24,7 @@ Token Action HUD is a repositionable HUD of actions for a selected tokens.
 
 ## Installation
 
-### Method 1 (not available for now)
+### Method 1
 
 1. On Foundry VTT's **Configuration and Setup** screen, go to **Add-on Modules**
 2. Click **Install Module**

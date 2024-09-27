@@ -39,8 +39,8 @@ languages:
 
 compatibility:
   minimum: 11
-  verified: '11.311'
-  maximum: 11
+  verified: '12.331'
+  maximum: 12
 
 relationships:
   requires:
@@ -48,7 +48,7 @@ relationships:
       type: module
       compatibility:
         minimum: '1.5.0'
-        verified: '1.5.2'
+        verified: '1.5.7'
   recommends: []
   conflicts: []
   systems:
@@ -56,6 +56,6 @@ relationships:
       type: system
       compatibility:
         minimum: '11.300'
-        verified: '11.313.1'
+        verified: '12.331.1'
 
 packs: []

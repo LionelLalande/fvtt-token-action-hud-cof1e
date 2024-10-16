@@ -101,12 +101,14 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
 
         case 'effect':
         case 'effects':
-          const effect = this.actor.effects?.get(<string>actionId);
-          if (!effect) return;
-
-          const updates = this.actor.effects?.map((effect) => {
-            return { _id: effect.id, disabled: !effect.disabled };
-          });
+          const updates = this.actor.effects
+            ?.filter((effect) => {
+              return effect.id === actionId;
+            })
+            .map((effect) => {
+              return { _id: effect.id, disabled: !effect.disabled };
+            });
+          if (!updates) return;
           await this.actor.updateEmbeddedDocuments('ActiveEffect', [...updates]);
           Hooks.callAll('forceUpdateTokenActionHud');
           break;

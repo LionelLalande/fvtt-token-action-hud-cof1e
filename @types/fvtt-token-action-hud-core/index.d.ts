@@ -45,28 +45,59 @@ declare global {
     }
   }
 
-  interface Action {
+  interface ActionInfo {
+     class: string;
+     icon: string;
+     text: string;
+     title: string;
+  }
+  interface Action<TSystem = any> {
     id: string;
     name: string;
-    encodedValue: string;
+    /** @deprecated Use system instead! */
+    encodedValue?: string;
     icon1?: string;
-    info1?: string | { class?: string; text?: number | string | null };
-    info2?: string | {};
+    info1?: Partial<ActionInfo>;
+    info2?: Partial<ActionInfo>;
+    info3?: Partial<ActionInfo>;
     listName: string;
     cssClass?: string;
+    tooltip?: string | { content: string; class: string; direction: "UP", "DOWN", "LEFT", "RIGHT", "CENTER" };
+    system: TSystem;
+    onClick?: (event: MouseEvent) => void | Promise<void>;
+    onHover?: (event: MouseEvent) => void | Promise<void>;
   }
 
-  class ActionHandler<TActor extends Actor<TokenDocument> = Actor<TokenDocument>, TToken = unknown> {
-    actor: TActor;
-    token: TToken;
+  class ActionHandler<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  > {
+    get actor(): TActor;
+    get actors(): TActor[];
+    get token(): TToken;
+    get tokens(): TToken[];
+
+    get isRightClick(): boolean;
+    get isAlt(): boolean;
+    get isCtrl(): boolean;
+    get isShift(): boolean;
+    get isHover(): boolean;
 
     delimiter: string;
+    hudManager: unknown;
+    systemManager: SystemManager<TActor, TToken>;
 
-    addActions(actions: Action[], groupData: string | { id: string; type: string; });
-    buildSystemActions(groupIds: string[]): void | Promise<void>;
+    addActions(actions: Partial<Action>[], groupData: string | { id: string; type: string; });
+    buildSystemActions(groupIds: string[]): Promise<void>;
+    updateActions(actions: Partial<Action>[], groupData: string | { id: string; type: string; });
   }
 
-  class ActionHandlerExtender {}
+  class ActionHandlerExtender<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  > {
+    extendActionHandler(): void;
+  }
 
   class DataHandler {}
 
@@ -75,20 +106,80 @@ declare global {
     static error(message: string | object): void;
   }
 
-  class PreRollHandler {}
+  class RollHandler<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  > {
+    get actor(): TActor;
+    get actors(): TActor[];
+    get token(): TToken;
+    get tokens(): TToken[];
 
-  class RollHandler<TActor extends Actor<TokenDocument> = Actor<TokenDocument>, TToken = unknown> {
-    actor: TActor;
-    token: TToken;
-    handleActionClick(event: MouseEvent, encodedValue:string): Promise<void> | void;
+    action: Action;
+
+    get isRightClick(): boolean;
+    get isAlt(): boolean;
+    get isCtrl(): boolean;
+    get isShift(): boolean;
+    get isHover(): boolean;
+
+    delimiter: string;
+    hudManager: unknown;
+
+    handleActionClick(
+      event: MouseEvent,
+      /** @deprecated Will be removed in future versions. */
+      encodedValue?: string): Promise<void> | void;
+
+    handleActionHover(
+      event: MouseEvent,
+      /** @deprecated Will be removed in future versions. */
+      encodedValue?: string): Promise<void> | void;
+
+    handleGroupClick(
+      event: MouseEvent,
+      group?: unknown): void;
+
+    renderItem(actor: TActor, itemId: string) : boolean;
+
+    throwInvalidValueErr(err: unknown): void;
   }
 
-  class SystemManager<TActor extends Actor<TokenDocument> = Actor<TokenDocument>, TToken = unknown>{
+  class PreRollHandler<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  > {
+    prehandleActionEvent(
+      event: MouseEvent,
+      buttonValue?: string,
+      actionHandler: typeof ActionHandler<TActor, TToken>): boolean;
+  }
+
+  class RollHandlerExtender<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  > {
+    prehandleActionEvent(
+      event: MouseEvent,
+      buttonValue?: string,
+      actionHandler: typeof ActionHandler<TActor, TToken>): boolean;
+
+    handleActionClick(
+      event: MouseEvent,
+      buttonValue?: string,
+      actionHandler: typeof ActionHandler<TActor, TToken>): boolean;
+  }
+
+  class SystemManager<
+    TActor extends Actor<TokenDocument> = Actor<TokenDocument>,
+    TToken extends Token<TokenDocument> = Token<TokenDocument>,
+  >{
     getActionHandler(): ActionHandler<TActor, TToken>;
     getAvailableRollHandlers(): { core: string };
-    getRollHandler(rollHandlerId: string): RollHandler<CofActor, CofToken>;
+    getRollHandler(rollHandlerId: string): RollHandler<TActor, TToken> | false | undefined;
     registerSettings(onChangeFunction: (value?: string) => void): void;
-    registerDefaults(): void;
+    registerDefaults(): Promise<unknown>;
+    registerStyles(): { class: string; file: string; moduleId: string; name: string }[];
   }
 
   class Timer {}
@@ -99,11 +190,9 @@ declare global {
     static setSetting(key: string, value: unknown): void | Promise<void>;
     static isModuleActive(moduleID: string): boolean;
     static getModuleTitle(moduleID: string): string;
-    static getControlledTokens(): unknown[];
+    static getControlledTokens(): Token[];
+    static getFirstControlledTokens(): Token;
     static getImage(itemData: any);
     static sortItemsByName<TCollection>(items: TCollection): TCollection;
-  }
-
-  class Hooks {
   }
 }

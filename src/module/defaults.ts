@@ -1,7 +1,7 @@
 import { Group } from './Group';
 import { GROUPS } from './constants';
 
-let DEFAULTS: {
+interface DEFAULTS {
   layout: {
     id: string;
     nestId: string;
@@ -21,7 +21,9 @@ let DEFAULTS: {
     }[];
   }[];
   groups: Group[];
-};
+}
+
+let DEFAULTS: DEFAULTS;
 
 export function initDefaults(coreModule: TokenActionHudCoreModule) {
   const groups: {

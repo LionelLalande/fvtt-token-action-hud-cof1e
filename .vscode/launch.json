@@ -1,10 +1,14 @@
 {
-    "configurations": [
-        {
-            "type": "msedge",
-            "name": "http://localhost:30001",
-            "request": "launch",
-            "url": "http://localhost:30001"
-        }
-    ]
+  "configurations": [
+    {
+      "name": "Launch MSEdge",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:30001",
+      "webRoot": "${workspaceFolder}/src",
+      "runtimeArgs": [],
+      "preLaunchTask": "Start Dev",
+      "postDebugTask": "Stop Dev"
+    }
+  ]
 }

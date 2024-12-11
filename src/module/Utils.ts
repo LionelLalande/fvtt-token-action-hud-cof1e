@@ -1,5 +1,3 @@
-// <reference Path="../../@types/token-action-hud-core/index.d.ts" />
-
 import { MODULES } from './constants';
 
 export function initUtils(coreModule: TokenActionHudCoreModule) {

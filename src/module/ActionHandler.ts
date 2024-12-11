@@ -1,15 +1,8 @@
-/// <reference Path="../../@types/foundry/index.d.ts" />
-/// <reference Path="../../@types/fvtt-token-action-hud-core/index.d.ts" />
-/// <reference Path="../../@types/fvtt-cof/index.d.ts" />
-
-////import { AnyActor } from '@types/foundry/client/documents/token-document';
 import { ACTION_ICON, ACTION_TYPE, ATTACK_TYPE, CAPACITY_TYPE, EFFECT_TYPE, ITEM_TYPE } from './constants';
 
 export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: typeof Utils) {
   return class CofActionHandler extends coreModule.api.ActionHandler<CofActor, CofToken> {
-    public actors?: CofActor[];
     public actorType?: string;
-    public tokens?: CofToken[];
 
     public items?: foundry.abstract.EmbeddedCollection<CofItem>;
 
@@ -23,9 +16,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
      */
     override async buildSystemActions(groupIds: string[]) {
       // Set actor and token variables
-      this.actors = !this.actor ? this.#getActors() : [<CofActor>(<unknown>this.actor)];
       this.actorType = this.actor?.type;
-      this.tokens = !this.token ? this.#getTokens() : [<CofToken>(<unknown>this.token)];
 
       // Exit if actor is not a known type
       const knownActors = ['character', 'npc', 'encounter'];
@@ -33,7 +24,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
 
       // Set items variable
       if (this.actor) {
-        let items = (<CofActor>(<unknown>this.actor)).items;
+        let items = this.actor.items as foundry.abstract.EmbeddedCollection<CofItem>;
         items = coreModule.api.Utils.sortItemsByName(items);
         for (const item of items) {
           if (item.type !== 'item') items.delete(item.id);
@@ -41,42 +32,18 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         this.items = items;
       }
 
-      this.abbreviateSkills = <boolean>utils.getSetting('abbreviateSkills');
+      this.abbreviateSkills = utils.getSetting('abbreviateSkills', false) as boolean;
 
       // Set group variables
       this.groupIds = groupIds;
 
       if (this.actorType === 'character' || this.actorType === 'npc') {
         await this.#buildCharacterActions();
-      } else if (this.actorType == 'encounter') {
+      } else if (this.actorType === 'encounter') {
         await this.#buildEncounterActions();
       } else if (!this.actor) {
         this.#buildMultipleTokenActions();
       }
-    }
-
-    /** Get selected actors from canvas. */
-    #getActors(): CofActor[] {
-      const allowedTypes = ['character', 'npc', 'encounter'];
-      const tokens = <CofToken[]>coreModule.api.Utils.getControlledTokens();
-      const actors = tokens.filter((token) => token.actor).map((token) => token.actor!);
-      if (actors.every((actor) => allowedTypes.includes(actor.type))) {
-        return actors;
-      }
-
-      return [];
-    }
-
-    /** Get selected tokens from canvas */
-    #getTokens(): CofToken[] {
-      const allowedTypes = ['character', 'npc', 'encounter'];
-      const tokens = <CofToken[]>coreModule.api.Utils.getControlledTokens();
-      const actors = tokens?.filter((token) => token.actor).map((token) => token.actor!);
-      if (actors.every((actor) => allowedTypes.includes(actor.type))) {
-        return tokens;
-      }
-
-      return [];
     }
 
     /** Build character actions. */
@@ -120,28 +87,27 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
     async #buildAttributesStats() {
       const groupId = 'attributes';
       const actionType = 'stats';
-      const stats = <{ [key: string]: { value: number; mod: number } }>(
-        (this.actor ? this.actor.system!.stats : game.cof.config.stats)
-      );
+      const stats = (this.actor ? this.actor.system!.stats : game.cof.config.stats) as Record<
+        string,
+        { value: number; mod: number }
+      >;
       const actions = Object.entries(stats).map(([statId, stat]) => {
         const id = `${groupId}-${actionType}-${statId}`;
         const abbreviatedName = coreModule.api.Utils.i18n(`COF.stats.${statId}.abbrev`);
         const label = game.cof.config.stats[statId];
         const name = this.abbreviateSkills ? abbreviatedName : label;
-        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
         const listName = `${actionTypeName}${label}`;
-        const encodedValue = [actionType, statId].join(this.delimiter);
-        const icon1 = ''; ////(groupId !== 'checks') ? this.#getProficiencyIcon(abilities[abilityId].proficient) : ''
-        ////const mod = stat.mod ?? null; //// (groupId !== 'saves') ? ability?.mod : ((groupId === 'saves') ? ability?.save : '')
+        const icon1 = '';
         const info1 = this.#getItemMod(stat);
-        return <Action>{
+        return {
           id,
           name,
-          encodedValue,
           icon1,
           info1,
           listName,
-        };
+          system: { actionType, actionId: statId },
+        } as Action;
       });
 
       const groupData = { id: 'attributes-stats', type: 'system' };
@@ -151,7 +117,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
     async #buildCombatSkills() {
       const groupId = 'combat';
       const actionType = 'skill';
-      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
 
       const skills = <
         {
@@ -159,7 +125,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             mod: number;
           };
         }
-      >(this.actor ? this.actor.system!.attacks : game.cof.config.skills);
+        >(this.actor ? this.actor.system!.attacks : game.cof.config.skills);
 
       const actions = Object.entries(skills)
         .map(([key, skill]) => {
@@ -168,23 +134,22 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const abbreviatedName = coreModule.api.Utils.i18n(`COF.attacks.${key}.abbrev`);
             const name = this.abbreviateSkills ? abbreviatedName : game.cof.config.skills[key];
             const listName = `${actionTypeName}${game.cof.config.skills[key]}`;
-            const encodedValue = [actionType, key].join(this.delimiter);
             const info1 = this.#getItemMod(skill);
             return {
               id,
               name,
-              encodedValue,
               icon1: undefined,
               info1,
               listName,
-            };
+              system: { actionType, actionId: key },
+            } as Action;
           } catch (error) {
             coreModule.api.Logger.error(skill);
             return null;
           }
         })
         .filter((skill) => !!skill)
-        .map((skill) => <Action>skill!);
+        .map((skill) => skill!);
 
       const groupData = { id: 'combat-skills', type: 'system' };
       this.addActions(actions, groupData);
@@ -224,18 +189,14 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const name = this.#getActionName(item);
             const listName = this.#getActionListName(item, actionType);
             const cssClass = this.#getActionCss(item);
-            const encodedValue = [actionType, item.id ?? item._id].join(this.delimiter);
             const icon1 = this.#getIcon1(<CofItem & { actionIcon: string }>item /*, actionType*/);
             const icon2 = this.#getCarryTypeIcon(item);
             const img = coreModule.api.Utils.getImage(item);
             const info1 = this.#getItemMod(item);
             const info2 = this.#getItemQuantity(item);
-            ////const tooltipData = null; ////await this.#getTooltipData(actionType, itemData);
-            const tooltip: string | null = null; ////await this.#getTooltip(actionType, tooltipData);
             return {
               id,
               name,
-              encodedValue,
               cssClass,
               img,
               icon1,
@@ -243,8 +204,8 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
               info1,
               info2,
               listName,
-              tooltip,
-            };
+              system: { actionType, actionId: item.id ?? item._id },
+            } as Action;
           }),
         );
 
@@ -263,26 +224,25 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
 
       const groupId = 'combat';
       const actionType = 'attack';
-      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
 
       const actions = await Promise.all(
         Object.entries(attacks).map(([key, attack]) => {
           const id = `${groupId}-${actionType}-${key}`;
-          const name = this.#getActionName(<{ name?: string; label?: string }>attack);
+          const name = this.#getActionName(attack);
           const listName = `${actionTypeName}${name}`;
           const cssClass = this.#getActionCss(attack);
-          const encodedValue = [actionType, key].join(this.delimiter);
           const img = '/systems/cof/ui/icons/attack.webp';
           const info1 = this.#getItemMod(attack);
-          return <Action>{
+          return {
             id,
             name,
-            encodedValue,
             cssClass,
             img,
             info1,
             listName,
-          };
+            system: { actionType, actionId: key },
+          } as Action;
         }),
       );
 
@@ -327,18 +287,14 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const name = this.#getActionName(itemData);
             const listName = this.#getActionListName(itemData, actionType);
             const cssClass = this.#getActionCss(itemData);
-            const encodedValue = [actionType, id].join(this.delimiter);
-            const icon1 = ''; ////this.#getIcon1(itemData /*, actionType*/);
+            const icon1 = '';
             const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
             const img = coreModule.api.Utils.getImage(itemData);
             const info1 = this.#getItemQuantity(itemData);
             const info2 = this.#getItemMod(itemData);
-            ////const tooltipData = null; ////await this.#getTooltipData(actionType, itemData);
-            const tooltip: string | null = null; ////await this.#getTooltip(actionType, tooltipData);
-            return <Action>{
+            return {
               id,
               name,
-              encodedValue,
               cssClass,
               img,
               icon1,
@@ -346,8 +302,8 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
               info1,
               info2,
               listName,
-              tooltip,
-            };
+              system: { actionType, actionId: id },
+            } as Action;
           }),
         );
 
@@ -379,7 +335,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         const groupId = ITEM_TYPE[id]?.groupId;
         if (!groupId) continue;
         const groupData = { id: groupId, type: 'system' };
-        const actionTypeName = `${coreModule.api.Utils.i18n('COF.category.item')}: ` ?? '';
+        const actionTypeName = `${coreModule.api.Utils.i18n('COF.category.item')}: `;
 
         // Get actions
         const actions = await Promise.all(
@@ -389,24 +345,21 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
             const name = this.#getActionName(itemData);
             const listName = `${actionTypeName}${name}`;
             const cssClass = this.#getActionCss(itemData);
-            const encodedValue = [actionType, itemData.id ?? itemData._id].join(this.delimiter);
             const img = coreModule.api.Utils.getImage(itemData);
             const icon1 = this.#getIcon1(<CofItem & { actionIcon: string }>itemData /*, actionType*/);
             const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
             const info1 = this.#getItemQuantity(itemData);
-            const tooltip: string | null = null; ////await this.#getTooltip(actionType, tooltipData);
             return {
               id,
               name,
-              encodedValue,
               cssClass,
               img,
               icon1,
               icon2,
               info1,
               listName,
-              tooltip,
-            };
+              system: { actionType, actionId: itemData.id ?? itemData._id },
+            } as Action;
           }),
         );
 
@@ -444,17 +397,15 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         const actionType = 'combat';
         const id = `combat-utils-${combatType[0]}`;
         const name = combatType[1].name;
-        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
         const listName = `${actionTypeName}${name}`;
-        const encodedValue = [actionType, combatType[1].id].join(this.delimiter);
         const info1: { class?: string; text?: number | null } = {};
         let cssClass = '';
         if (combatType[0] === 'initiative' && game.combat) {
-          const tokens = <CofToken[]>coreModule.api.Utils.getControlledTokens();
-          const tokenIds = tokens?.map((token) => token.id);
-          const combatants = (<CofCombatant[]>game.combat.combatants).filter((combatant: CofCombatant) =>
-            tokenIds.includes(<string>combatant.tokenId),
-          );
+          const tokenIds = this.tokens.map((token) => token.id);
+          const combatants = (game.combat.combatants as CofCombatant[])
+            .filter((combatant: CofCombatant) => typeof combatant.tokenId === 'string')
+            .filter((combatant: CofCombatant) => tokenIds.includes(combatant.tokenId!));
 
           // Get initiative for single token
           if (combatants.length === 1) {
@@ -472,11 +423,11 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         return {
           id,
           name,
-          encodedValue,
           info1,
           cssClass,
           listName,
-        };
+          system: { actionType, actionId: combatType[1].id },
+        } as Action;
       });
 
       const groupData = { id: 'combat-utils', type: 'system' };
@@ -511,21 +462,20 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
           [...effect].map(async (effect) => {
             const id = `${groupId}_${actionType}_${effect._id}`;
             const name = effect.name;
-            const encodedValue = [actionType, effect._id].join(this.delimiter);
             const active = effect.disabled ? '' : ' active';
             const cssClass = `toggle${active}`;
             const img = coreModule.api.Utils.getImage(effect);
-            const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+            const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
             const listName = `${actionTypeName}${name}`;
 
             return {
               id,
               name,
-              encodedValue,
               cssClass,
               img,
               listName,
-            };
+              system: { actionType, actionId: effect._id },
+            } as Action;
           }),
         );
 
@@ -543,8 +493,8 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
     }
 
     #getActionListName(entity: { name?: string; label?: string; listName?: string }, actionType: string) {
-      const name = this.#getActionName(<{ name?: string; label?: string }>entity);
-      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: ` ?? '';
+      const name = this.#getActionName(entity);
+      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
       return entity.listName ?? `${actionTypeName}${name}`;
     }
 
@@ -559,14 +509,8 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       }
     }
 
-    #getIcon1(entity: CofItem & { actionIcon: string } /*, actionType: string*/) {
-      const { actions, actionType } = entity.system;
-      const actionTypes = ['free', 'reaction', 'passive'];
-      const actionTypeValue = actionType?.value;
-      const actionsCost = actions ? parseInt((actions || {}).value, 10) : null;
-      ////const timeValue = entity.system?.time?.value;
-      const actionIcon = entity.actionIcon;
-      const iconType = actionTypes.includes(actionTypeValue) ? actionTypeValue : actionsCost ?? actionIcon;
+    #getIcon1(entity: CofItem) {
+      const iconType = entity.system.worn ? 'equipped' : undefined;
       return this.#getActionIcon(String(iconType));
     }
 
@@ -584,7 +528,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       }
     }
 
-    #getItemQuantity(item: CofItem) {
+    #getItemQuantity(item: CofItem): Partial<ActionInfo> | undefined {
       if ('system' in item) {
         const { system } = item;
         const { properties } = system;
@@ -603,22 +547,22 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       }
     }
 
-    #getItemMod(item: CofItem | { mod: number }) {
+    #getItemMod(item: CofItem | { mod: number }): Partial<ActionInfo> | undefined {
       if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system && item.system.skill) {
-        let skillName = <string>item.system.skill;
+        let skillName = item.system.skill as string;
         skillName = skillName.split('@')[1];
         if (!skillName) return;
         const skillMod0 = this.#getValue<number>(item.actor.system, skillName) ?? 0;
         const skillMod1 = Number(item.system.skillBonus) ?? 0;
         const skillMod = skillMod0 + skillMod1;
         const text = skillMod < 0 ? skillMod : `(+${skillMod})`;
-        return { text };
+        return { text: `${text}` };
       }
 
       // monster/encounter attack/weapon or skill
       if ('mod' in item) {
         const text = item.mod < 0 ? item.mod : `(+${item.mod})`;
-        return { text };
+        return { text: `${text}` };
       }
     }
 
@@ -631,7 +575,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         }
       }
 
-      return <T>instance;
+      return instance as T;
     }
 
     #getActionIcon(action: string) {

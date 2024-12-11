@@ -2,14 +2,13 @@ import * as systemSettings from './settings';
 
 export function initSystemManager(
   coreModule: TokenActionHudCoreModule,
-  actionHandlerType: typeof ActionHandler<CofActor, CofToken>,
-  rollHandlerType: typeof RollHandler<CofActor, CofToken>,
-  utilsType: typeof Utils,
+  ActionHandlerType: typeof ActionHandler<CofActor, CofToken>,
+  RollHandlerType: typeof RollHandler<CofActor, CofToken>,
   DEFAULTS: unknown,
-) {
+): typeof SystemManager<CofActor, CofToken> {
   return class CofSystemManager extends coreModule.api.SystemManager<CofActor, CofToken> {
     override getActionHandler(): ActionHandler<CofActor, CofToken> {
-      const actionHandler = new actionHandlerType();
+      const actionHandler = new ActionHandlerType();
       return actionHandler;
     }
 
@@ -23,7 +22,7 @@ export function initSystemManager(
       switch (rollHandlerId) {
         case 'core':
         default:
-          const rollHandler = new rollHandlerType();
+          const rollHandler = new RollHandlerType();
           return rollHandler;
       }
     }
@@ -33,7 +32,7 @@ export function initSystemManager(
       systemSettings.register(onChangeFunction);
     }
 
-    override async registerDefaults() {
+    override async registerDefaults(): Promise<unknown> {
       const defaults = DEFAULTS;
       return defaults;
     }

@@ -39,7 +39,7 @@ languages:
 
 compatibility:
   minimum: 11
-  verified: '12.331'
+  verified: "12.331"
   maximum: 12
 
 relationships:
@@ -47,15 +47,15 @@ relationships:
     - id: token-action-hud-core
       type: module
       compatibility:
-        minimum: '1.5.0'
-        verified: '1.5.7'
+        minimum: "2.0.0"
+        verified: "2.0.10"
   recommends: []
   conflicts: []
   systems:
     - id: cof
       type: system
       compatibility:
-        minimum: '11.300'
-        verified: '12.331.1'
+        minimum: "11.300"
+        verified: "12.331.3"
 
 packs: []

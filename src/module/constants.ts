@@ -1,4 +1,4 @@
-export const REQUIRED_CORE_MODULE_VERSION = '1.5';
+export const REQUIRED_CORE_MODULE_VERSION = '2.0';
 
 export const MODULES = {
   TokenActionHUD: {

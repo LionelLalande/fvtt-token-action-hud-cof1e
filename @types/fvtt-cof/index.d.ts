@@ -3,7 +3,7 @@ import { AnyActor } from "@types/foundry/client/documents/token-document";
 import { ActorSchema } from "../foundry/common/documents/actor";
 import { ItemSchema } from "../foundry/common/documents/item";
 
-export {}
+export { }
 declare global {
 
   export interface CofRoll {
@@ -42,12 +42,12 @@ declare global {
 
     isWeakened(): boolean;
 
-    activateCapacity(capacity: CofItem, options?: { bonus?: number; malus?: number; dialog?: boolean } ): Promise<void>;
+    activateCapacity(capacity: CofItem, options?: { bonus?: number; malus?: number; dmgOnly?: boolean; dialog?: boolean }): Promise<void>;
     consumeItem(item: CofItem): CofItem;
     getMalusFromArmor(): number;
     getOverloadedMalusTotal(): number;
-    rollStat(stat: string, options?: { bonus?: number; malus?: number, dice?: string; dialog?: boolean } ): Promise<void>;
-    rollWeapon(item: CofItem, options?: { bonus?: number; malus?: number; dmgOnly?: boolean; dialog?: boolean } ): Promise<void>;
+    rollStat(stat: string, options?: { bonus?: number; malus?: number, dice?: string; dialog?: boolean }): Promise<void>;
+    rollWeapon(item: CofItem, options?: { bonus?: number; malus?: number; dmgOnly?: boolean; dialog?: boolean }): Promise<void>;
     // for monsters/encounters
     rollWeapon(
       weaponId: number,
@@ -67,7 +67,7 @@ declare global {
     readonly _source: CofItemSource;
     system: CofItemSystemSource;
 
-    applyEffects(actor: CofActor, options?: { bonus?: number; malus?: number; dialog?: boolean }): Promise<void>;
+    applyEffects(actor: CofActor, options?: { bonus?: number; malus?: number; dmgBonus?; dmgOnly?: boolean; customLabel?: string; skillDescr?: string; dmgDescr?: string; dialog?: boolean }): Promise<void>;
     modifyQuantity(increment: number, isDecrese: boolean);
     modifyUse(increment: number, isDecrese: boolean);
 
@@ -86,7 +86,7 @@ declare global {
     get combatant(): CollectionValue<this["combatants"]> | undefined;
   }
 
-  export interface CofCombatant extends Combatant<CofCombat> {}
+  export interface CofCombatant extends Combatant<CofCombat> { }
 
   export interface CofEncounterWeapon {
     critrange: string;
@@ -121,7 +121,7 @@ declare global {
   };
 
   export type CofItemSource = {
-    system : CofItemSystemSource
+    system: CofItemSystemSource
   };
 
   export type CofItemSystemSource = {
@@ -139,8 +139,8 @@ declare global {
       ranged: boolean;
       activable: boolean;
       stackable: boolean;
-      limitedUsage:{
-        maxUse:number;
+      limitedUsage: {
+        maxUse: number;
         use: number;
       }
     };

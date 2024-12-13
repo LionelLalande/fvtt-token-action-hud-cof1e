@@ -15,72 +15,65 @@ export const GROUPS = {
   combatAttacks: { id: 'combat-attacks', name: 'COF.combat.attacks', type: 'system' },
   combatMelee: { id: 'combat-melee', name: 'COF.category.melee-plural', type: 'system' },
   combatRanged: { id: 'combat-ranged', name: 'COF.category.ranged-plural', type: 'system' },
-  combatMagic: { id: 'combat-magic', name: 'COF.attacks.magic.label', type: 'system' },
+  combatSpells: { id: 'combat-spells', name: 'tokenActionHud.cof.magic-plural', type: 'system' },
   combatShields: { id: 'combat-shields', name: 'COF.armors.shield', type: 'system' },
-  combatArmors: { id: 'combat-armors', name: 'COF.category.armor-plural', type: 'system' },
   combatUtils: { id: 'combat-utils', name: 'tokenActionHud.cof.Combat.Utils', type: 'system' },
+  capacitiesRacial: { id: 'capacities-racial', name: 'COF.species.capacities', type: 'system' },
+  capacitiesProfile: { id: 'capacities-profile', name: 'COF.ui.capacities', type: 'system' },
+  capacitiesOther: { id: 'capacities-other', name: 'COF.ui.OffPathsCapacities', type: 'system' },
   inventoryWeapons: { id: 'inventory-weapons', name: 'tokenActionHud.cof.Weapons', type: 'system' },
   inventoryProtections: { id: 'inventory-protections', name: 'COF.properties.protection', type: 'system' },
   inventoryContainers: { id: 'inventory-containers', name: 'COF.category.container', type: 'system' },
   inventoryConsumables: { id: 'inventory-consumables', name: 'COF.category.consumable', type: 'system' },
-  inventoryEquipment: { id: 'inventory-equipment', name: 'COF.ui.equipment', type: 'system' },
-  capacitiesRacial: { id: 'capacities-racial', name: 'COF.species.capacities', type: 'system' },
-  capacitiesProfile: { id: 'capacities-profile', name: 'COF.ui.capacities', type: 'system' },
-  capacitiesOther: { id: 'capacities-other', name: 'COF.ui.OffPathsCapacities', type: 'system' },
-  temporaryEffects: { id: 'temporary-effects', name: 'tokenActionHud.cof.Effects.Temporary', type: 'system' },
-  passiveEffects: { id: 'passive-effects', name: 'tokenActionHud.cof.Effects.Passive', type: 'system' },
+  inventoryAmmunitions: { id: 'inventory-ammunitions', name: 'COF.category.ammunition', type: 'system' },
+  inventoryEquipment: { id: 'inventory-equipment', name: 'COF.category.item', type: 'system' },
+  inventoryWand: { id: 'inventory-wand', name: 'COF.category.wand', type: 'system' },
+  inventoryJewel: { id: 'inventory-jewel', name: 'COF.category.jewel', type: 'system' },
+  inventoryMount: { id: 'inventory-mount', name: 'COF.category.mount', type: 'system' },
+  inventoryScroll: { id: 'inventory-scroll', name: 'COF.category.scroll', type: 'system' },
+  inventorySpell: { id: 'inventory-spell', name: 'COF.category.spell', type: 'system' },
+  inventoryOther: { id: 'inventory-other', name: 'COF.category.other', type: 'system' },
+  effectsPermanent: { id: 'effects-permanent', name: 'tokenActionHud.cof.Effects.Permanent', type: 'system' },
+  effectsTemporary: { id: 'effects-temporary', name: 'tokenActionHud.cof.Effects.Temporary', type: 'system' },
   token: { id: 'token', name: 'tokenActionHud.token', type: 'system' },
 };
 
 export const ACTION_TYPE: { [key: string]: string } = {
-  stats: 'COF.ui.stat',
-  capacity: 'COF.ui.capacity',
-  skill: 'tokenActionHud.cof.Combat.Skills',
-  items: 'tokenActionHud.cof.Items',
-  effects: 'tokenActionHud.cof.Effects.All',
+  rollStat: 'COF.ui.stat',
+  rollCombatSkill: 'tokenActionHud.cof.Combat.Skills',
+  rollAttack: 'COF.ui.attack', // encounters
+  rollAttackMelee: 'COF.category.melee',
+  rollAttackRanged: 'COF.category.ranged',
+  rollAttackShield: 'COF.category.shield',
+  rollAttackSpell: 'COF.attacks.magic.label',
+  rollCapacity: 'COF.ui.capacity',
+  rollEffect: 'tokenActionHud.cof.Effects.All',
+  useItem: 'tokenActionHud.cof.Items',
+  combat: 'COF.tabs.combat', // initiative & endTurn
   utility: 'tokenActionHud.utility',
-  attack: 'COF.ui.attack',
-  armor: 'COF.category.armor',
-  melee: 'COF.category.melee',
-  ranged: 'COF.category.ranged',
-  shield: 'COF.category.shield',
-  spell: 'COF.attacks.magic.label',
-  combat: 'COF.tabs.combat',
 };
 
 export const ACTION_ICON: { [key: string]: string } = {
-  equiped: 'fa-solid fa-bow-arrow fa-fw',
+  activatable: 'fa-solid fa-check fa-fw',
+  equipped: 'fa-solid fa-shield-alt fa-fw',
+  worn: 'fa-solid fa-hand-fist fa-fw fa-rotate-90', // fa-bow-arrow
 };
 
 export const ITEM_TYPE: { [key: string]: { groupId: string } } = {
-  ammunition: { groupId: 'inventory-consumables' },
-  armor: { groupId: 'inventory-protections' },
-  consumable: { groupId: 'inventory-consumables' },
-  container: { groupId: 'inventory-containers' },
-  equipment: { groupId: 'inventory-equipment' },
-  melee: { groupId: 'inventory-weapons' },
-  ranged: { groupId: 'inventory-weapons' },
-  shield: { groupId: 'inventory-protections' },
-  trapping: { groupId: 'inventory-consumables' },
-  weapon: { groupId: 'inventory-weapons' },
-};
-
-export const ATTACK_TYPE: { [key: string]: { groupId: string } } = {
-  attack: { groupId: 'combat-attacks' },
-  armor: { groupId: 'combat-armors' },
-  melee: { groupId: 'combat-melee' },
-  ranged: { groupId: 'combat-ranged' },
-  shield: { groupId: 'combat-shields' },
-  spell: { groupId: 'combat-spells' },
-};
-
-export const CAPACITY_TYPE: { [key: string]: { groupId: string } } = {
-  species: { groupId: 'capacities-racial' },
-  other: { groupId: 'capacities-other' },
-  profile: { groupId: 'capacities-profile' },
-};
-
-export const EFFECT_TYPE: { [key: string]: { groupId: string } } = {
-  passive: { groupId: 'passive-effects' },
-  temporary: { groupId: 'temporary-effects' },
+  ammunition: { groupId: 'ammunition' },
+  armor: { groupId: 'protections' },
+  consumable: { groupId: 'consumables' },
+  container: { groupId: 'containers' },
+  equipment: { groupId: 'equipment' },
+  melee: { groupId: 'weapons' },
+  ranged: { groupId: 'weapons' },
+  shield: { groupId: 'protections' },
+  trapping: { groupId: 'equipment' },
+  weapon: { groupId: 'weapons' },
+  wand: { groupId: 'wand' }, // baguette
+  jewel: { groupId: 'jewel' }, // bijou
+  mount: { groupId: 'mount' }, // monture
+  scroll: { groupId: 'scroll' }, // parchemin
+  spell: { groupId: 'spell' }, // sort
+  other: { groupId: 'other' },
 };

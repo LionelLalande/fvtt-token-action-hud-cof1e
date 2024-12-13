@@ -1,559 +1,558 @@
-import { ACTION_ICON, ACTION_TYPE, ATTACK_TYPE, CAPACITY_TYPE, EFFECT_TYPE, ITEM_TYPE } from './constants';
+import { ACTION_ICON, ACTION_TYPE, ITEM_TYPE } from './constants'; // ATTACK_TYPE, CAPACITY_TYPE, EFFECT_TYPE,
 
 export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: typeof Utils) {
   return class CofActionHandler extends coreModule.api.ActionHandler<CofActor, CofToken> {
-    public actorType?: string;
-
-    public items?: foundry.abstract.EmbeddedCollection<CofItem>;
-
-    public groupIds?: string[];
-
     // Initialize setting variables
     public abbreviateSkills: boolean = false;
 
     /**
      * Build System Actions
      */
-    override async buildSystemActions(groupIds: string[]) {
-      // Set actor and token variables
-      this.actorType = this.actor?.type;
+    override async buildSystemActions(/*_groupIds: string[]*/) {
+      const actorType = this.actor?.type;
 
       // Exit if actor is not a known type
       const knownActors = ['character', 'npc', 'encounter'];
-      if (this.actorType && !knownActors.includes(this.actorType)) return;
-
-      // Set items variable
-      if (this.actor) {
-        let items = this.actor.items as foundry.abstract.EmbeddedCollection<CofItem>;
-        items = coreModule.api.Utils.sortItemsByName(items);
-        for (const item of items) {
-          if (item.type !== 'item') items.delete(item.id);
-        }
-        this.items = items;
-      }
+      if (actorType && !knownActors.includes(actorType)) return;
 
       this.abbreviateSkills = utils.getSetting('abbreviateSkills', false) as boolean;
 
-      // Set group variables
-      this.groupIds = groupIds;
+      ////// Set group variables
+      ////this.groupIds = groupIds.sort((a, b) => b.localeCompare(a));
 
-      if (this.actorType === 'character' || this.actorType === 'npc') {
-        await this.#buildCharacterActions();
-      } else if (this.actorType === 'encounter') {
-        await this.#buildEncounterActions();
-      } else if (!this.actor) {
-        this.#buildMultipleTokenActions();
+      const availableActions = this.#getActorActions(actorType);
+      for (const data of availableActions) {
+        const { groupId, actions } = data;
+        this.addActions(actions, { id: groupId, type: 'system' });
       }
     }
 
-    /** Build character actions. */
-    async #buildCharacterActions() {
-      // eslint-disable-next-line prettier/prettier
-      await Promise.all([
-        this.#buildAttributesStats(),
-        this.#buildCombatSkills(),
-        this.#buildCombatAttacks(),
-        this.#buildCapacities(),
-        this.#buildInventory(),
-        this.#buildCombatUtils(),
-        this.#buildEffects(),
-      ]);
+    /** Retrieve all available actions in zero, one or more actors */
+    #getActorActions(actorType: string): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      switch (actorType) {
+        case 'character':
+        case 'npc':
+          return this.#buildCharacterSections();
+        case 'encounter':
+          return this.#buildEncounterSections();
+        default:
+          return this.#buildTokensSections();
+      }
     }
 
-    /** Build encounter actions. */
-    async #buildEncounterActions() {
-      // eslint-disable-next-line prettier/prettier
-      await Promise.all([
-        this.#buildAttributesStats(),
-        this.#buildCombatAttacksForEncounters(),
-        this.#buildCapacities(),
-        this.#buildInventory(),
-        this.#buildCombatUtils(),
-        this.#buildEffects(),
-      ]);
+    // ******************************************************************************** //
+
+    #buildCharacterSections(): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      const items = (function (self) {
+        if (self.actor) {
+          let items = self.actor.items as foundry.abstract.EmbeddedCollection<CofItem>;
+          items = coreModule.api.Utils.sortItemsByName(items);
+          //for (const item of items) {
+          //  if (item.type !== 'item') items.delete(item.id);
+          //}
+          return items.values().toArray();
+        }
+        return [];
+      })(this);
+      const effects = this.actor.effects.values().toArray();
+      return [
+        ...this.#buildAttributesSection(),
+        ...this.#buildCombatSection(items),
+        ...this.#buildCapacitiesSection(items),
+        ...this.#buildInventorySection(items),
+        ...this.#buildEffectsSection(effects),
+      ];
+    }
+
+    #buildEncounterSections(): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      const items = (function (self) {
+        if (self.actor) {
+          let items = self.actor.items as foundry.abstract.EmbeddedCollection<CofItem>;
+          items = coreModule.api.Utils.sortItemsByName(items);
+          //for (const item of items) {
+          //  if (item.type !== 'item') items.delete(item.id);
+          //}
+          return items.values().toArray();
+        }
+        return [];
+      })(this);
+      const effects = this.actor.effects.values().toArray();
+      return [
+        ...this.#buildAttributesSection(),
+        ...this.#buildEncounterCombatSection(),
+        ...this.#buildCapacitiesSection(items),
+        ...this.#buildInventorySection(items),
+        ...this.#buildEffectsSection(effects),
+      ];
     }
 
     /** Build multiple controlled tokens actions. */
-    async #buildMultipleTokenActions() {
-      // eslint-disable-next-line prettier/prettier
-      await Promise.all([
-        this.#buildAttributesStats(),
-        this.#buildCombatSkills(),
-        this.#buildCombatUtils(),
-        this.#buildEffects(),
-      ]);
+    #buildTokensSections(): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      return [
+        ...this.#buildAttributesSection(),
+        this.#buildCombatSkillsSection('combat'),
+        ////...this.#buildCombatUtils(),
+      ];
     }
 
-    async #buildAttributesStats() {
-      const groupId = 'attributes';
-      const actionType = 'stats';
+    // ******************************************************************************** //
+
+    #buildAttributesSection(): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      const groupType = 'attributes';
+      return [
+        {
+          groupId: `${groupType}-stats`,
+          actions: this.#getAttributeStatsActions(`${groupType}-stats`, 'rollStat'),
+        },
+      ];
+    }
+
+    #buildCombatSection(items: CofItem[]): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      const groupId = 'combat';
+      return [
+        this.#buildCombatSkillsSection(groupId),
+        this.#buildCombatMeleeSection(groupId, items),
+        this.#buildCombatRangedSection(groupId, items),
+        this.#buildCombatSpellsSection(groupId, items),
+        this.#buildCombatShieldsSection(groupId, items),
+        ////...this.#buildCombatUtils(),
+      ];
+    }
+
+    #buildEncounterCombatSection(): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      const groupId = 'combat';
+      const attacks = Object.values(this.actor.system?.weapons);
+      const result = [this.#buildCombatSkillsSection(groupId)];
+      if (attacks && attacks.length > 0) {
+        result.push(this.#buildEncounterCombatAttackSection(groupId, attacks));
+      }
+      ////...this.#buildCombatUtils(),
+      return result;
+    }
+
+    #buildEncounterCombatAttackSection(
+      groupId: string,
+      attacks: CofEncounterWeapon[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-attacks`;
+      return {
+        groupId,
+        actions: this.#buildEncounterCombatAttackActions(groupId, 'rollAttack', attacks),
+      };
+    }
+
+    #buildCombatSkillsSection(groupId: string): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-skills`;
+      const skills = this.actor ? this.actor.system!.attacks : game.cof.config.skills;
+      return {
+        groupId,
+        actions: this.#buildCombatSkillActions(groupId, 'rollCombatSkill', skills),
+      };
+    }
+
+    #buildCombatMeleeSection(
+      groupId: string,
+      items: CofItem[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-melee`;
+      const weapons = items.filter(
+        (item) => item.type === 'item' && item.system.subtype === 'melee' && item.system.worn,
+      );
+      return {
+        groupId,
+        actions: this.#buildCombatAttackActions(groupId, 'rollAttackRanged', weapons),
+      };
+    }
+
+    #buildCombatRangedSection(
+      groupId: string,
+      items: CofItem[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-ranged`;
+      const weapons = items.filter(
+        (item) => item.type === 'item' && item.system.subtype === 'ranged' && item.system.worn,
+      );
+      return {
+        groupId,
+        actions: this.#buildCombatAttackActions(groupId, 'rollAttackRanged', weapons),
+      };
+    }
+
+    #buildCombatSpellsSection(
+      groupId: string,
+      items: CofItem[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-spells`;
+      const spells = items.filter(
+        (item) =>
+          item.type === 'capacity' &&
+          'attack' in item.system &&
+          item.system.attack &&
+          item.system.spell &&
+          (!('heal' in item.system) || !item.system.heal), // TODO add "mains libres" ?
+      );
+      return {
+        groupId,
+        actions: this.#buildCombatAttackActions(groupId, 'rollAttackSpell', spells),
+      };
+    }
+
+    #buildCombatShieldsSection(
+      groupId: string,
+      items: CofItem[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      groupId = `${groupId}-shields`;
+      const coupDeBouclierItem = items.find((item) => item.name === 'Coup de bouclier');
+      const shields = items.filter(
+        (item) => item.type === 'item' && item.system.subtype === 'shield' && item.system.worn,
+      );
+      return {
+        groupId,
+        actions: coupDeBouclierItem
+          ? this.#buildCombatAttackActions(groupId, 'rollAttackShield', shields, coupDeBouclierItem?.id)
+          : [],
+      };
+    }
+
+    #buildCapacitiesSection(items: CofItem[]): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      // TODO filter out not usabled capacity! use settings to enable or disable...
+      ////const isUsableCapacity = (item: CofItem) => {
+      ////  return (!('attack' in item.system) || !item.system.attack) &&
+      ////    (item.system.activable || item.system.limitedUsage || item.system.spell);
+      ////};
+      const isRacialCapacity = (item: CofItem) => item.type === 'capacity' && 'species' in item.system;
+      const isProfileCapacity = (item: CofItem) => {
+        const capacity = this.#isCapacity(item) ? item : undefined;
+        if (!capacity) return false;
+        const path =
+          // ts-expect-error don't know why!
+          'path' in capacity.system && capacity.system.path && '_id' in capacity.system.path
+            ? this.actor.items.get(capacity.system.path._id as string)
+            : undefined;
+        if (!path) return false;
+        const profile =
+          'profile' in path.system && path.system.profile && '_id' in path.system.profile
+            ? this.actor.items.get(path.system.profile._id as string)
+            : undefined;
+        return !!profile;
+      };
+      const isOtherCapacity = (item: CofItem) => {
+        const capacity = this.#isCapacity(item) ? item : undefined;
+        if (!capacity || isProfileCapacity(item) || isRacialCapacity(item)) return false;
+        return true;
+      };
+      const capacityMap = {
+        racial: items.filter(isRacialCapacity),
+        profile: items.filter(isProfileCapacity),
+        other: items.filter(isOtherCapacity),
+      };
+      const groupId = 'capacities';
+      const actionType = 'rollCapacity';
+      return Object.entries(capacityMap).map(([key, capacities]) => {
+        return this.#buildSubSection(`${groupId}-${key}`, actionType, capacities);
+      });
+    }
+
+    ////#buildCapacitySection(groupId: string, actionType: string, capacities: CofItem[]): Action[] {
+    ////  return capacities.map((capacity) => {
+    ////    return this.#buildAction(groupId, actionType, capacity);
+    ////  });
+    ////}
+
+    #buildInventorySection(items: CofItem[]): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      // Exit early if no items exist
+      if (items.length === 0) return [];
+
+      const inventoryMap = new Map</*category*/ string, CofItem[]>();
+      items.forEach((item: CofItem) => {
+        if (item.type !== 'item') return;
+        const key = item.system.properties.consumable ? 'consumable' : item.system.subtype;
+        const groupId = ITEM_TYPE[key]?.groupId;
+        if (!groupId) return;
+        const hasQuantity = item.system.qty > 0;
+        if (!hasQuantity) return;
+        const itemCategoryMap = inventoryMap.get(groupId) ?? [];
+        itemCategoryMap.push(item);
+        inventoryMap.set(groupId, itemCategoryMap);
+      });
+
+      const groupId = 'inventory';
+      const actionType = 'useItem';
+      const groupedItems: { groupId: string; actions: Action[] }[] = [];
+      inventoryMap.forEach((items, key) => {
+        const section = this.#buildSubSection(`${groupId}-${key}`, actionType, items);
+        groupedItems.push(section);
+      });
+      return groupedItems;
+    }
+
+    #buildEffectsSection(effects: ActiveEffect<CofActor>[]): {
+      groupId: string;
+      actions: Action[];
+    }[] {
+      // Exit early if no items exist
+      if (effects.length === 0) return [];
+
+      const effectMap = {
+        permanent: effects.filter((effect) => !effect.isTemporary),
+        temporary: effects.filter((effect) => effect.isTemporary),
+      };
+
+      const groupId = 'effects';
+      const actionType = 'toggleEffect';
+      return Object.entries(effectMap).map(([key, effects]) => {
+        return this.#buildSubSection(`${groupId}-${key}`, actionType, effects);
+      });
+    }
+
+    // ******************************************************************************** //
+
+    #buildSubSection<T extends CofItem | ActiveEffect<CofActor>>(
+      groupId: string,
+      actionType: string,
+      objects: T[],
+    ): {
+      groupId: string;
+      actions: Action[];
+    } {
+      return {
+        groupId,
+        actions: objects.map((obj) => this.#buildAction(groupId, actionType, obj)),
+      };
+    }
+
+    // ******************************************************************************** //
+
+    #getAttributeStatsActions(groupId: string, actionType: string): Action[] {
       const stats = (this.actor ? this.actor.system!.stats : game.cof.config.stats) as Record<
         string,
         { value: number; mod: number }
       >;
-      const actions = Object.entries(stats).map(([statId, stat]) => {
-        const id = `${groupId}-${actionType}-${statId}`;
-        const abbreviatedName = coreModule.api.Utils.i18n(`COF.stats.${statId}.abbrev`);
-        const label = game.cof.config.stats[statId];
-        const name = this.abbreviateSkills ? abbreviatedName : label;
-        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
-        const listName = `${actionTypeName}${label}`;
-        const icon1 = '';
-        const info1 = this.#getItemMod(stat);
-        return {
-          id,
-          name,
-          icon1,
-          info1,
-          listName,
-          system: { actionType, actionId: statId },
-        } as Action;
+      const abbrev = (key: string) => `COF.stats.${key}.abbrev`;
+      const values = (key: string) => game.cof.config.stats[key];
+      return Object.entries(stats).map(([key, stat]) => {
+        return this.#buildStatAction(groupId, actionType, key, stat, abbrev(key), values(key));
       });
-
-      const groupData = { id: 'attributes-stats', type: 'system' };
-      this.addActions(actions, groupData);
     }
 
-    async #buildCombatSkills() {
-      const groupId = 'combat';
-      const actionType = 'skill';
-      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
-
-      const skills = <
-        {
-          [key: string]: {
-            mod: number;
-          };
-        }
-        >(this.actor ? this.actor.system!.attacks : game.cof.config.skills);
-
-      const actions = Object.entries(skills)
-        .map(([key, skill]) => {
-          try {
-            const id = `${groupId}-${actionType}-${key}`;
-            const abbreviatedName = coreModule.api.Utils.i18n(`COF.attacks.${key}.abbrev`);
-            const name = this.abbreviateSkills ? abbreviatedName : game.cof.config.skills[key];
-            const listName = `${actionTypeName}${game.cof.config.skills[key]}`;
-            const info1 = this.#getItemMod(skill);
-            return {
-              id,
-              name,
-              icon1: undefined,
-              info1,
-              listName,
-              system: { actionType, actionId: key },
-            } as Action;
-          } catch (error) {
-            coreModule.api.Logger.error(skill);
-            return null;
-          }
-        })
-        .filter((skill) => !!skill)
-        .map((skill) => skill!);
-
-      const groupData = { id: 'combat-skills', type: 'system' };
-      this.addActions(actions, groupData);
-    }
-
-    async #buildCombatAttacks() {
-      // Exit early if no items exist
-      if (!this.items || this.items.size === 0) return;
-
-      const hasCoupDeBouclierItem = Array.from(this.items.values()).find((item) => item.name === 'Coup de bouclier');
-
-      const attacksMap = new Map<string, Map<string, CofItem>>();
-
-      this.items.forEach((item: CofItem) => {
-        const isEquippedItem = item.system?.worn;
-        if (isEquippedItem) {
-          if (!hasCoupDeBouclierItem && item.system.subtype === 'shield') return;
-          const itemCategoryMap = attacksMap.get(item.system.subtype) ?? new Map<string, CofItem>();
-          itemCategoryMap.set(item.id, item);
-          attacksMap.set(item.system.subtype, itemCategoryMap);
-        }
+    #buildCombatSkillActions(groupId: string, actionType: string, skills: Record<string, { mod: number }>): Action[] {
+      const abbrev = (key: string) => `COF.attacks.${key}.abbrev`;
+      const values = (key: string) => game.cof.config.skills[key];
+      return Object.entries(skills).map(([key, skill]) => {
+        return this.#buildStatAction(groupId, actionType, key, skill, abbrev(key), values(key));
       });
-
-      // Loop through inventory group ids
-      for (const [actionType, items] of attacksMap) {
-        // Create group data
-        const groupId = ATTACK_TYPE[actionType]?.groupId;
-        if (!groupId) continue;
-        const groupData = { id: groupId, type: 'system' };
-        console.debug('COF-TAH Debug |', actionType, groupData);
-
-        // Get actions
-        const actions = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          [...items].map(async ([_, item]) => {
-            const id = this.#getActionId(item);
-            const name = this.#getActionName(item);
-            const listName = this.#getActionListName(item, actionType);
-            const cssClass = this.#getActionCss(item);
-            const icon1 = this.#getIcon1(<CofItem & { actionIcon: string }>item /*, actionType*/);
-            const icon2 = this.#getCarryTypeIcon(item);
-            const img = coreModule.api.Utils.getImage(item);
-            const info1 = this.#getItemMod(item);
-            const info2 = this.#getItemQuantity(item);
-            return {
-              id,
-              name,
-              cssClass,
-              img,
-              icon1,
-              icon2,
-              info1,
-              info2,
-              listName,
-              system: { actionType, actionId: item.id ?? item._id },
-            } as Action;
-          }),
-        );
-
-        console.debug('COF-TAH Debug | attacks', actions);
-
-        // Add actions to action list
-        this.addActions(actions, groupData);
-      }
     }
 
-    async #buildCombatAttacksForEncounters() {
-      const attacks = this.actor.system?.weapons;
+    #buildCombatAttackActions(groupId: string, actionType: string, attacks: CofItem[], replaceId?: string): Action[] {
+      return attacks.map((attack) => {
+        return this.#buildAction(groupId, actionType, attack, { replaceId, showMod: true });
+      });
+    }
 
-      // Exit early if no items exist
-      if (!attacks || attacks.length === 0) return;
+    #buildEncounterCombatAttackActions(groupId: string, actionType: string, attacks: CofEncounterWeapon[]): Action[] {
+      return Object.entries(attacks).map(([key, attack]) => {
+        return this.#buildEncounterAttackAction(groupId, actionType, key, attack);
+      });
+    }
 
-      const groupId = 'combat';
-      const actionType = 'attack';
-      const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
+    // ******************************************************************************** //
 
-      const actions = await Promise.all(
-        Object.entries(attacks).map(([key, attack]) => {
-          const id = `${groupId}-${actionType}-${key}`;
-          const name = this.#getActionName(attack);
-          const listName = `${actionTypeName}${name}`;
-          const cssClass = this.#getActionCss(attack);
-          const img = '/systems/cof/ui/icons/attack.webp';
-          const info1 = this.#getItemMod(attack);
-          return {
-            id,
-            name,
-            cssClass,
-            img,
-            info1,
-            listName,
-            system: { actionType, actionId: key },
-          } as Action;
-        }),
+    #buildAction(
+      groupId: string,
+      actionType: string,
+      action: CofItem | ActiveEffect<CofActor>,
+      options?: { replaceId?: string; showMod?: boolean },
+    ) {
+      const id = `${groupId}-${action.id}`;
+      const name = action.name;
+      return {
+        id,
+        name,
+        listName: this.#getActionListName(actionType, name),
+        img: coreModule.api.Utils.getImage(action),
+        cssClass: this.#getActionCss(action),
+        icon1: this.#isItem(action) ? this.#getActionIcon(action) : undefined,
+        info1:
+          (options?.showMod ?? false) && (this.#isCapacity(action) || this.#isWeapon(action))
+            ? this.#getActionModifier(action)
+            : undefined,
+        info2: this.#hasQuantity(action) ? this.#getActionQuantity(action) : undefined,
+        system: { actionType, actionId: options?.replaceId ?? action.id },
+      } as Action;
+    }
+
+    #buildStatAction(
+      groupId: string,
+      actionType: string,
+      key: string,
+      action: string | { mod: number },
+      translationKey: string,
+      label: string,
+    ): Action {
+      const id = `${groupId}-${key}`;
+      const abbrev = coreModule.api.Utils.i18n(translationKey);
+      const name = this.abbreviateSkills ? abbrev : label;
+      return {
+        id,
+        name,
+        listName: this.#getActionListName(actionType, label),
+        info1: typeof action === 'string' ? '' : this.#getActionModifier(action),
+        system: { actionType, actionId: key },
+      } as Action;
+    }
+
+    #buildEncounterAttackAction(groupId: string, actionType: string, key: string, action: CofEncounterWeapon): Action {
+      const id = `${groupId}-${key}`;
+      const name = action.name;
+      return {
+        id,
+        name,
+        listName: this.#getActionListName(actionType, name),
+        img: coreModule.api.Utils.getImage(action) ?? '/systems/cof/ui/icons/attack.webp',
+        cssClass: this.#getActionCss(action),
+        info1: this.#getActionModifier(action),
+        system: { actionType, actionId: key },
+      } as Action;
+    }
+
+    // ******************************************************************************** //
+
+    #isActiveEffect(obj: unknown): obj is ActiveEffect<CofActor> {
+      // @ts-expect-error parameter is unknown
+      return 'duration' in obj && 'isTemporary' in obj;
+    }
+
+    #isItem(obj: unknown): obj is CofItem {
+      // @ts-expect-error parameter is unknown
+      return obj.type === 'item';
+    }
+
+    #isCapacity(obj: unknown): obj is CofItem {
+      // @ts-expect-error parameter is unknown
+      return obj.type === 'capacity';
+    }
+
+    #isPath(obj: unknown): obj is CofItem {
+      // @ts-expect-error parameter is unknown
+      return obj.type === 'path';
+    }
+
+    #isWeapon(obj: unknown): obj is CofItem {
+      // @ts-expect-error parameter is unknown
+      return ['melee', 'ranged'].includes(obj.system.subtype);
+    }
+
+    #hasQuantity(obj: unknown): obj is CofItem {
+      // @ts-expect-error parameter is unknown
+      if (!('properties' in obj.system)) return undefined;
+      // @ts-expect-error parameter is unknown
+      const { system } = obj;
+      const { properties } = system;
+      return (
+        'limitedUsage' in properties ||
+        ('stackable' in properties && 'qty' in system) ||
+        ('consumable' in properties && 'qty' in system)
       );
-
-      console.debug('COF-TAH Debug | encounter attacks', attacks, actions);
-
-      // Create group data
-      const groupData = { id: 'combat-attacks', type: 'system' };
-
-      // Add actions to action list
-      this.addActions(actions, groupData);
     }
 
-    async #buildCapacities() {
-      // Exit early if no items exist
-      if (this.items?.size === 0) return;
-
-      const actionType = 'capacity';
-      const capacitiesMap = new Map<string, Map<string, CofItem>>();
-
-      this.items?.forEach((item: CofItem) => {
-        if (item.type !== 'capacity') return;
-
-        const key = item.id;
-        const itemType =
-          'species' in item.system ? 'species' : 'path' in item.system && item.system.path !== '' ? 'profile' : 'other';
-        const groupId = CAPACITY_TYPE[itemType]?.groupId;
-        if (!groupId) return;
-
-        const itemCategoryMap = capacitiesMap.get(groupId) ?? new Map<string, CofItem>();
-        itemCategoryMap.set(key, item);
-        capacitiesMap.set(groupId, itemCategoryMap);
-      });
-
-      // Loop through attack group ids
-      for (const [groupId, capacity] of capacitiesMap) {
-        // Create group data
-        const groupData = { id: groupId, type: 'system' };
-
-        // Get actions
-        const actions = await Promise.all(
-          [...capacity].map(async ([id, itemData]) => {
-            const name = this.#getActionName(itemData);
-            const listName = this.#getActionListName(itemData, actionType);
-            const cssClass = this.#getActionCss(itemData);
-            const icon1 = '';
-            const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
-            const img = coreModule.api.Utils.getImage(itemData);
-            const info1 = this.#getItemQuantity(itemData);
-            const info2 = this.#getItemMod(itemData);
-            return {
-              id,
-              name,
-              cssClass,
-              img,
-              icon1,
-              icon2,
-              info1,
-              info2,
-              listName,
-              system: { actionType, actionId: id },
-            } as Action;
-          }),
-        );
-
-        // Add actions to action list
-        this.addActions(actions, groupData);
-      }
-    }
-
-    async #buildInventory() {
-      // Exit early if no items exist
-      if (this.items?.size === 0) return;
-
-      const actionType = 'item';
-      const inventoryMap = new Map<string, Map<string, CofItem>>();
-
-      this.items?.forEach((item: CofItem) => {
-        const key = item.id;
-        const hasQuantity = item.system.qty > 0;
-        if (hasQuantity) {
-          const itemCategoryMap = inventoryMap.get(item.system.subtype) ?? new Map<string, CofItem>();
-          itemCategoryMap.set(key, item);
-          inventoryMap.set(item.system.subtype, itemCategoryMap);
-        }
-      });
-
-      // Loop through inventory group ids
-      for (const [id, items] of inventoryMap) {
-        // Create group data
-        const groupId = ITEM_TYPE[id]?.groupId;
-        if (!groupId) continue;
-        const groupData = { id: groupId, type: 'system' };
-        const actionTypeName = `${coreModule.api.Utils.i18n('COF.category.item')}: `;
-
-        // Get actions
-        const actions = await Promise.all(
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          [...items].map(async ([_, itemData]) => {
-            const id = this.#getActionId(itemData);
-            const name = this.#getActionName(itemData);
-            const listName = `${actionTypeName}${name}`;
-            const cssClass = this.#getActionCss(itemData);
-            const img = coreModule.api.Utils.getImage(itemData);
-            const icon1 = this.#getIcon1(<CofItem & { actionIcon: string }>itemData /*, actionType*/);
-            const icon2 = this.#getCarryTypeIcon(itemData) || this.#getActivableTypeIcon(itemData);
-            const info1 = this.#getItemQuantity(itemData);
-            return {
-              id,
-              name,
-              cssClass,
-              img,
-              icon1,
-              icon2,
-              info1,
-              listName,
-              system: { actionType, actionId: itemData.id ?? itemData._id },
-            } as Action;
-          }),
-        );
-
-        // Add actions to action list
-        this.addActions(actions, groupData);
-      }
-    }
-
-    async #buildCombatUtils() {
-      const combatTypes: { [key: string]: { id: string; name: string } } = {
-        initiative: { id: 'initiative', name: coreModule.api.Utils.i18n('tokenActionHud.cof.Combat.rollInitiative') },
-        endTurn: { id: 'endTurn', name: coreModule.api.Utils.i18n('tokenActionHud.endTurn') },
-      };
-
-      // Delete initiative if combat has not started or
-      // no selected tokens are in combat...
-      if (!game.combat) {
-        delete combatTypes.initiative;
-      } else if (this.tokens) {
-        for (const t of this.tokens) {
-          const combatant = game.combat.getCombatantByToken(t.id);
-          if (!combatant) {
-            delete combatTypes.initiative;
-            break;
-          }
-        }
-      }
-
-      // Delete endTurn for multiple tokens
-      if (game.combat?.current?.tokenId !== this.token?.id) {
-        delete combatTypes.endTurn;
-      }
-
-      const actions = Object.entries(combatTypes).map((combatType) => {
-        const actionType = 'combat';
-        const id = `combat-utils-${combatType[0]}`;
-        const name = combatType[1].name;
-        const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
-        const listName = `${actionTypeName}${name}`;
-        const info1: { class?: string; text?: number | null } = {};
-        let cssClass = '';
-        if (combatType[0] === 'initiative' && game.combat) {
-          const tokenIds = this.tokens.map((token) => token.id);
-          const combatants = (game.combat.combatants as CofCombatant[])
-            .filter((combatant: CofCombatant) => typeof combatant.tokenId === 'string')
-            .filter((combatant: CofCombatant) => tokenIds.includes(combatant.tokenId!));
-
-          // Get initiative for single token
-          if (combatants.length === 1) {
-            const currentInitiative = combatants[0].initiative;
-            info1.class = 'tah-spotlight';
-            info1.text = currentInitiative;
-          }
-
-          const active =
-            combatants.length > 0 && combatants.every((combatant: CofCombatant) => combatant?.initiative)
-              ? ' active'
-              : '';
-          cssClass = `toggle${active}`;
-        }
-        return {
-          id,
-          name,
-          info1,
-          cssClass,
-          listName,
-          system: { actionType, actionId: combatType[1].id },
-        } as Action;
-      });
-
-      const groupData = { id: 'combat-utils', type: 'system' };
-      this.addActions(actions, groupData);
-    }
-
-    async #buildEffects() {
-      const effects = this.actor.effects;
-      if (effects.size === 0) return;
-
-      const effectsMap = new Map<string, ActiveEffect<CofActor>[]>();
-
-      effects?.forEach((effect) => {
-        const itemType = effect.isTemporary ? 'temporary' : 'passive';
-        const groupId = EFFECT_TYPE[itemType]?.groupId;
-        if (!groupId) return;
-
-        const effects = effectsMap.get(groupId) ?? [];
-        effects.push(effect);
-        effectsMap.set(groupId, effects);
-      });
-
-      const actionType = 'effects';
-
-      // Loop through attack group ids
-      for (const [groupId, effect] of effectsMap) {
-        // Create group data
-        const groupData = { id: groupId, type: 'system' };
-
-        // Get actions
-        const actions = await Promise.all(
-          [...effect].map(async (effect) => {
-            const id = `${groupId}_${actionType}_${effect._id}`;
-            const name = effect.name;
-            const active = effect.disabled ? '' : ' active';
-            const cssClass = `toggle${active}`;
-            const img = coreModule.api.Utils.getImage(effect);
-            const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
-            const listName = `${actionTypeName}${name}`;
-
-            return {
-              id,
-              name,
-              cssClass,
-              img,
-              listName,
-              system: { actionType, actionId: effect._id },
-            } as Action;
-          }),
-        );
-
-        // Add actions to action list
-        this.addActions(actions, groupData);
-      }
-    }
-
-    #getActionId(entity: CofItem /*, actionType?: string /*, spellLevel*/): string {
-      return entity.id ?? entity._id;
-    }
-
-    #getActionName(entity: { name?: string; label?: string }) {
-      return entity?.name ?? entity?.label ?? '';
-    }
-
-    #getActionListName(entity: { name?: string; label?: string; listName?: string }, actionType: string) {
-      const name = this.#getActionName(entity);
+    #getActionListName(actionType: string, name: string) {
       const actionTypeName = `${coreModule.api.Utils.i18n(ACTION_TYPE[actionType])}: `;
-      return entity.listName ?? `${actionTypeName}${name}`;
+      return `${actionTypeName}${name}`;
     }
 
-    #getActionCss(entity: object) {
-      if ('disabled' in entity) {
-        const active = !entity.disabled ? ' active' : '';
+    #getActionCss(obj: CofItem | CofEncounterWeapon | ActiveEffect<CofActor>) {
+      if ('disabled' in obj) {
+        const active = obj.disabled ? '' : ' active';
         return `toggle${active}`;
       }
-      if ('selected' in entity) {
-        const active = entity.selected ? ' active' : '';
+      if ('selected' in obj) {
+        const active = obj.selected ? ' active' : '';
         return `toggle${active}`;
       }
     }
 
-    #getIcon1(entity: CofItem) {
-      const iconType = entity.system.worn ? 'equipped' : undefined;
-      return this.#getActionIcon(String(iconType));
+    #getActionIcon(obj: CofItem) {
+      const iconType = (function () {
+        const activable = obj.system.activable;
+        if (activable) return 'activatable';
+        const worn = obj.system.worn;
+        const isWeapon = ['melee', 'ranged'].includes(obj.system.subtype);
+        if (isWeapon && worn) return 'worn';
+        if (worn) return 'equipped';
+        return '';
+      })();
+      return `<i class="${ACTION_ICON[iconType]}"></i>`;
     }
 
-    #getCarryTypeIcon(item?: CofItem) {
-      const worn = item?.system.worn;
-      if (worn) {
-        return '<i class="fas fa-shield-alt"></i>';
-      }
-    }
-
-    #getActivableTypeIcon(item?: CofItem) {
-      const activable = item?.system.activable;
-      if (activable) {
-        return '<i class="fas fa-check"></i>';
-      }
-    }
-
-    #getItemQuantity(item: CofItem): Partial<ActionInfo> | undefined {
-      if ('system' in item) {
-        const { system } = item;
-        const { properties } = system;
-        if (properties?.limitedUsage) {
-          const max = properties.limitedUsage.maxUse;
-          if (max > 0) {
-            const quantity = properties.limitedUsage.use;
-            const text = `[${quantity}/${max}]`;
-            return { text };
-          }
-        }
-        if ((properties?.stackable || properties?.consumable) && system.qty) {
-          const text = system.qty > 1 ? `[${system.qty}]` : '';
+    #getActionQuantity(item: CofItem): Partial<ActionInfo> | undefined {
+      const { system } = item;
+      const { properties } = system;
+      if (properties?.limitedUsage) {
+        const max = properties.limitedUsage.maxUse;
+        if (max > 0) {
+          const quantity = properties.limitedUsage.use;
+          const text = `[${quantity}/${max}]`;
           return { text };
         }
       }
+      if ((properties?.stackable || properties?.consumable) && system.qty) {
+        const text = system.qty > 1 ? `[${system.qty}]` : '';
+        return { text };
+      }
     }
 
-    #getItemMod(item: CofItem | { mod: number }): Partial<ActionInfo> | undefined {
+    #getActionModifier(item: CofItem | CofEncounterWeapon | { mod: number }): Partial<ActionInfo> | undefined {
       if ('system' in item && 'skill' in item.system && 'skillBonus' in item.system && item.system.skill) {
         let skillName = item.system.skill as string;
         skillName = skillName.split('@')[1];
         if (!skillName) return;
-        const skillMod0 = this.#getValue<number>(item.actor.system, skillName) ?? 0;
-        const skillMod1 = Number(item.system.skillBonus) ?? 0;
+        const skillMod0 = Number(foundry.utils.getProperty(item.actor.system, skillName));
+        const skillMod1 = Number(item.system.skillBonus);
         const skillMod = skillMod0 + skillMod1;
         const text = skillMod < 0 ? skillMod : `(+${skillMod})`;
         return { text: `${text}` };
@@ -561,25 +560,9 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
 
       // monster/encounter attack/weapon or skill
       if ('mod' in item) {
-        const text = item.mod < 0 ? item.mod : `(+${item.mod})`;
-        return { text: `${text}` };
+        const text = item.mod < 0 ? item.mod : `+${item.mod}`;
+        return { text: `(${text})` };
       }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    #getValue<T extends number | string | null>(instance: any, path: string): T {
-      const parts = path.split('.');
-      for (const part of parts) {
-        if (part in instance) {
-          instance = instance[part];
-        }
-      }
-
-      return instance as T;
-    }
-
-    #getActionIcon(action: string) {
-      return ACTION_ICON[action];
     }
   };
 }

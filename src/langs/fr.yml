@@ -7,9 +7,11 @@ tokenActionHud:
     Items: Objets
     Effects:
       Name: Effets
-      Passive: Effets passifs
+      #Passive: Effets passifs
+      Permanent: Effets permanents
       Temporary: Effets temporaires
     Weapons: Armes
+    magic-plural: Attaques magiques
     Settings:
       AbbreviateSkills:
         Name: Caractéristiques en abrégé

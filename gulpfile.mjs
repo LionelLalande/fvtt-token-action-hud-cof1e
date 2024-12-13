@@ -37,7 +37,9 @@ function copyTemplates() {
  * Copy all handlebar templates
  */
 function copyAssets() {
-  return gulp.src('assets/**/*').pipe(gulp.dest('dist/assets'));
+  return fs.existsSync('assets')
+    ? gulp.src('assets/**/*', { allowEmpty: true,  }).pipe(gulp.dest('dist/assets'))
+    : gulp.src('.');
 }
 
 export const build = gulp.series(clean, gulp.parallel(buildStyles, buildStaticJsonFiles, copyTemplates, copyAssets));

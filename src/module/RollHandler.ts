@@ -131,7 +131,11 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           // eslint-disable-next-line no-case-declarations
           const { actor } = this;
           // eslint-disable-next-line no-case-declarations
-          const stat = eval(`actor.system.stats.${actionId}`) ?? eval(`actor.system.attacks.${actionId}`);
+          const stat = (foundry.utils.getProperty(actor.system.stats, actionId) ?? foundry.utils.getProperty(actor.system.attacks, actionId)) as {
+            value: number;
+            mod: number;
+            superior?: boolean;
+          };
           // eslint-disable-next-line no-case-declarations
           const { superior } = stat;
           // eslint-disable-next-line no-case-declarations

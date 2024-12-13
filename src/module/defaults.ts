@@ -34,23 +34,31 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
     combatAttacks: Group;
     combatMelee: Group;
     combatRanged: Group;
-    combatMagic: Group;
+    combatSpells: Group;
     combatShields: Group;
-    combatArmors: Group;
+    ////combatArmors: Group;
     combatUtils: Group;
+    // capacities
+    capacitiesRacial: Group;
+    capacitiesProfile: Group;
+    capacitiesOther: Group;
     // inventory
     inventoryWeapons: Group;
     inventoryProtections: Group;
     inventoryContainers: Group;
     inventoryConsumables: Group;
+    inventoryAmmunitions: Group;
     inventoryEquipment: Group;
-    // capacities
-    capacitiesRacial: Group;
-    capacitiesProfile: Group;
-    capacitiesOther: Group;
+    inventoryWand: Group;
+    inventoryJewel: Group;
+    inventoryMount: Group;
+    inventoryScroll: Group;
+    inventorySpell: Group;
+    inventoryOther: Group;
     // effects
-    temporaryEffects: Group;
-    passiveEffects: Group;
+    effectsPermanent: Group;
+    effectsTemporary: Group;
+    ////effectsPassive: Group;
     // utilities
     token: Group;
     [key: string]: Group;
@@ -88,21 +96,9 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
           { ...groups.combatAttacks, nestId: 'combat_attacks' },
           { ...groups.combatMelee, nestId: 'combat_melee' },
           { ...groups.combatRanged, nestId: 'combat_ranged' },
-          { ...groups.combatMagic, nestId: 'combat_magic' },
+          { ...groups.combatSpells, nestId: 'combat_spells' },
           { ...groups.combatShields, nestId: 'combat_shields' },
           { ...groups.combatUtils, nestId: 'combat_utils' },
-        ],
-      },
-      {
-        nestId: 'inventory',
-        id: 'inventory',
-        name: coreModule.api.Utils.i18n('COF.tabs.inventory'),
-        groups: [
-          { ...groups.inventoryWeapons, nestId: 'inventory_weapons' },
-          { ...groups.inventoryProtections, nestId: 'inventory_protections' },
-          { ...groups.inventoryContainers, nestId: 'inventory_containers' },
-          { ...groups.inventoryEquipment, nestId: 'inventory_equipment' },
-          { ...groups.inventoryConsumables, nestId: 'inventory_consumables' },
         ],
       },
       {
@@ -116,12 +112,32 @@ export function initDefaults(coreModule: TokenActionHudCoreModule) {
         ],
       },
       {
+        nestId: 'inventory',
+        id: 'inventory',
+        name: coreModule.api.Utils.i18n('COF.tabs.inventory'),
+        groups: [
+          { ...groups.inventoryEquipment, nestId: 'inventory_equipment' },
+          { ...groups.inventoryAmmunitons, nestId: 'inventory_ammunitions' },
+          { ...groups.inventoryConsumables, nestId: 'inventory_consumables' },
+          { ...groups.inventoryProtections, nestId: 'inventory_protections' },
+          { ...groups.inventoryWeapons, nestId: 'inventory_weapons' },
+          { ...groups.inventoryWand, nestId: 'inventory_wand' },
+          { ...groups.inventoryJewel, nestId: 'inventory_jewel' },
+          { ...groups.inventoryMount, nestId: 'inventory_mount' },
+          { ...groups.inventoryScroll, nestId: 'inventory_scroll' },
+          { ...groups.inventorySpell, nestId: 'inventory_spell' },
+          { ...groups.inventoryOther, nestId: 'inventory_other' },
+          { ...groups.inventoryContainers, nestId: 'inventory_containers' },
+        ],
+      },
+      {
         nestId: 'effects',
         id: 'effects',
         name: coreModule.api.Utils.i18n('COF.tabs.effects'),
         groups: [
-          { ...groups.temporaryEffects, nestId: 'effects_temporary-effects' },
-          { ...groups.passiveEffects, nestId: 'effects_passive-effects' },
+          { ...groups.effectsPermanent, nestId: 'effects_permanent' },
+          { ...groups.effectsTemporary, nestId: 'effects_temporary' },
+          ////{ ...groups.effectsPassive, nestId: 'effects_passive' },
         ],
       },
       {

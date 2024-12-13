@@ -1,5 +1,11 @@
-.tah-info1 {
-    color: #789e79;
-    font-size: 80%;
+.tah-info1,
+.tah-info2 {
+    color: #789e79 !important;
+    font-size: 90% !important;
     font-weight: bold;
+}
+
+.tah-icon i.fa-solid {
+    font-size: 115% !important;
+    vertical-align: middle;
 }

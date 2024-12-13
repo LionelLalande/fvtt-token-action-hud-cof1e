@@ -128,7 +128,9 @@ declare global {
     activable: boolean;
     actionType: { value: string; };
     actions: { value: string; };
+    capacity?: { _id: string }
     description: string;
+    path?: { _id: string }
     subtype: string;
     mod: number;
     qty: number;

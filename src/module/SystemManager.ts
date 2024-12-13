@@ -22,12 +22,10 @@ export function initSystemManager(
       switch (rollHandlerId) {
         case 'core':
         default:
-          const rollHandler = new RollHandlerType();
-          return rollHandler;
+          return new RollHandlerType();
       }
     }
 
-    // eslint-disable-next-line no-unused-vars
     override registerSettings(onChangeFunction: (value?: string) => void) {
       systemSettings.register(onChangeFunction);
     }

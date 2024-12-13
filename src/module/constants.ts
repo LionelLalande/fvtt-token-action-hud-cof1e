@@ -38,7 +38,7 @@ export const GROUPS = {
   token: { id: 'token', name: 'tokenActionHud.token', type: 'system' },
 };
 
-export const ACTION_TYPE: { [key: string]: string } = {
+export const ACTION_TYPE: Record<string, string> = {
   rollStat: 'COF.ui.stat',
   rollCombatSkill: 'tokenActionHud.cof.Combat.Skills',
   rollAttack: 'COF.ui.attack', // encounters
@@ -53,13 +53,13 @@ export const ACTION_TYPE: { [key: string]: string } = {
   utility: 'tokenActionHud.utility',
 };
 
-export const ACTION_ICON: { [key: string]: string } = {
+export const ACTION_ICON: Record<string, string> = {
   activatable: 'fa-solid fa-check fa-fw',
   equipped: 'fa-solid fa-shield-alt fa-fw',
   worn: 'fa-solid fa-hand-fist fa-fw fa-rotate-90', // fa-bow-arrow
 };
 
-export const ITEM_TYPE: { [key: string]: { groupId: string } } = {
+export const ITEM_TYPE: Record<string, { groupId: string }> = {
   ammunition: { groupId: 'ammunition' },
   armor: { groupId: 'protections' },
   consumable: { groupId: 'consumables' },

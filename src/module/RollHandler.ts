@@ -29,10 +29,10 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
      */
     async #handleAction(actor: CofActor, _token: CofToken, actionType: string, actionId: string) {
       console.debug('COF-TAH Debug | handle action', actionType, actionId);
-      const itemOrEffect = actor.items.get(actionId) as CofItem || actor.effects.get(actionId) as ActiveEffect<CofActor>;
+      const itemOrEffect =
+        (actor.items.get(actionId) as CofItem) || (actor.effects.get(actionId) as ActiveEffect<CofActor>);
       const action = this.#getAction(actionId, actionType, itemOrEffect);
-      if (action)
-        await action();
+      if (action) await action();
     }
 
     /** Execute primary action (left-click) */
@@ -44,35 +44,44 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
 
         case 'rollAttackMelee':
         case 'rollAttackRanged':
-          return await this.actor.rollWeapon(item!);
+          if (item) return await this.actor.rollWeapon(item);
+          break;
 
         case 'rollAttack': // encounters/monsters
           return await this.actor.rollWeapon(/*weaponId:*/ Number(actionId));
 
         case 'rollAttackSpell':
         case 'rollCapacity':
-          return await this.actor.activateCapacity(item!);
+          if (item) return await this.actor.activateCapacity(item);
+          break;
 
         case 'rollAttackShield':
-          item!.applyEffects(this.actor, { /*dice: 'd12'*/ }); // cannot change dice to roll!
+          if (item)
+            return await item.applyEffects(this.actor, {
+              /*dice: 'd12'*/
+            }); // cannot change dice to roll!
           break;
 
         case 'useItem':
+          // eslint-disable-next-line no-case-declarations
           const equipable = item?.system.properties.equipable;
           if (equipable) {
             return this.actor.toggleEquipItem(item, false);
           }
 
+          // eslint-disable-next-line no-case-declarations
           const limitedUsage = item?.system.limitedUsage;
           if (limitedUsage) {
             item.modifyUse(1, true);
           }
 
+          // eslint-disable-next-line no-case-declarations
           const consumable = item?.system.properties.consumable;
           if (consumable) {
             this.actor.consumeItem(item);
           }
 
+          // eslint-disable-next-line no-case-declarations
           const stackable = item?.system.properties.stackable;
           if (stackable) {
             item.modifyQuantity(1, true);
@@ -80,6 +89,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           break;
 
         case 'toggleEffect':
+          // eslint-disable-next-line no-case-declarations
           const updates = this.actor.effects
             ?.filter((effect) => {
               return effect.id === actionId;
@@ -97,6 +107,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
             const { combat } = game;
             switch (actionId) {
               case 'initiative':
+                // eslint-disable-next-line no-case-declarations
                 const combatant = combat.getCombatantByToken(this.token.id);
                 await combat.rollInitiative(combatant.id);
                 break;
@@ -117,21 +128,27 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
       switch (actionType) {
         case 'rollStat':
         case 'rollCombatSkill':
+          // eslint-disable-next-line no-case-declarations
           const { actor } = this;
+          // eslint-disable-next-line no-case-declarations
           const stat = eval(`actor.system.stats.${actionId}`) ?? eval(`actor.system.attacks.${actionId}`);
+          // eslint-disable-next-line no-case-declarations
           const { superior } = stat;
+          // eslint-disable-next-line no-case-declarations
           const dice = superior ? (actor.isWeakened() ? '2d12kh' : '2d20kh') : actor.isWeakened() ? '1d12' : '1d20';
           return await actor.rollStat(actionId, { dice, dialog: false });
 
         case 'rollAttackMelee':
         case 'rollAttackRanged':
-          return await this.actor.rollWeapon(item!, { dialog: false });
+          if (item) return await this.actor.rollWeapon(item, { dialog: false });
+          break;
 
         case 'rollAttackSpell':
-          return await this.actor.activateCapacity(item!, { dialog: false }); // dialog is even shown!
+          if (item) return await this.actor.activateCapacity(item, { dialog: false }); // dialog is even shown!
+          break;
 
         case 'rollAttackShield':
-          item!.applyEffects(this.actor, { dialog: false, /*dice: 'd12'*/ }); // dialog is even shown! cannot change dice to roll!
+          if (item) return await item.applyEffects(this.actor, { dialog: false /*dice: 'd12'*/ }); // dialog is even shown! cannot change dice to roll!
           break;
 
         case 'rollAttack': // encounters/monsters
@@ -148,6 +165,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           );
 
         case 'useItem':
+          // eslint-disable-next-line no-case-declarations
           const equipable = item?.system.properties.equipable;
           if (equipable) {
             return this.actor.toggleEquipItem(item, true);
@@ -159,7 +177,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
     async #sendItemToChat(item: CofItem) {
       let description = item.system.description;
       if (description.startsWith('<h1>Description</h1>')) {
-        description = description.substr(20);
+        description = description.substring(20);
       }
 
       const templateData = {
@@ -192,10 +210,10 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
           return await this.actor.rollWeapon(item, options);
 
         case 'rollAttackSpell':
-          return await this.actor.activateCapacity(item!, options); // even roll attack!
+          return await this.actor.activateCapacity(item, options); // even roll attack!
 
         case 'rollAttackShield':
-          return item!.applyEffects(this.actor, { ...options, /*dice: 'd12'*/ }); // cannot change dice to roll!
+          return item.applyEffects(this.actor, { ...options /*dice: 'd12'*/ }); // cannot change dice to roll!
       }
     }
 
@@ -227,17 +245,17 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
 
     /** Execute alternate attack action (shift + right-click) */
     #executeDmgOnly(actionType: string, item: CofItem) {
-      const options = { dmgOnly: true, dialog: false }
+      const options = { dmgOnly: true, dialog: false };
       switch (actionType) {
         case 'rollAttackMelee':
         case 'rollAttackRanged':
           return this.actor.rollWeapon(item, options);
 
         case 'rollAttackSpell':
-          return this.actor.activateCapacity(item!, options); // dialog is even shown!
+          return this.actor.activateCapacity(item, options); // dialog is even shown!
 
         case 'rollAttackShield':
-          return item!.applyEffects(this.actor, { ...options, /*dice: 'd12'*/ }); // cannot change dice to roll! dialog is even shown!
+          return item.applyEffects(this.actor, { ...options /*dice: 'd12'*/ }); // cannot change dice to roll! dialog is even shown!
       }
     }
 
@@ -277,6 +295,7 @@ export function initRollHandler(coreModule: TokenActionHudCoreModule) {
         // ctrl + left-click (execute ternary action: open sheet)
         case 'false,false,true':
           if (item) return () => this.#openItemSheet(item);
+          // eslint-disable-next-line no-case-declarations
           const effect = this.actor.effects.get(actionId);
           if (effect) return () => this.#openEffectSheet(effect);
           break;

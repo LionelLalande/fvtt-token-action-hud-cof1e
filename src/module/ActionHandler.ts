@@ -3,7 +3,7 @@ import { ACTION_ICON, ACTION_TYPE, ITEM_TYPE } from './constants'; // ATTACK_TYP
 export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: typeof Utils) {
   return class CofActionHandler extends coreModule.api.ActionHandler<CofActor, CofToken> {
     // Initialize setting variables
-    public abbreviateSkills: boolean = false;
+    public abbreviateSkills = false;
 
     /**
      * Build System Actions
@@ -53,9 +53,6 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         if (self.actor) {
           let items = self.actor.items as foundry.abstract.EmbeddedCollection<CofItem>;
           items = coreModule.api.Utils.sortItemsByName(items);
-          //for (const item of items) {
-          //  if (item.type !== 'item') items.delete(item.id);
-          //}
           return items.values().toArray();
         }
         return [];
@@ -170,7 +167,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
       actions: Action[];
     } {
       groupId = `${groupId}-skills`;
-      const skills = this.actor ? this.actor.system!.attacks : game.cof.config.skills;
+      const skills = this.actor ? this.actor.system.attacks : game.cof.config.skills;
       return {
         groupId,
         actions: this.#buildCombatSkillActions(groupId, 'rollCombatSkill', skills),
@@ -268,12 +265,12 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
         if (!capacity) return false;
         const path =
           // ts-expect-error don't know why!
-          'path' in capacity.system && capacity.system.path && '_id' in capacity.system.path
+          'path' in capacity.system && capacity.system.path
             ? this.actor.items.get(capacity.system.path._id as string)
             : undefined;
         if (!path) return false;
         const profile =
-          'profile' in path.system && path.system.profile && '_id' in path.system.profile
+          'profile' in path.system && path.system.profile
             ? this.actor.items.get(path.system.profile._id as string)
             : undefined;
         return !!profile;
@@ -369,7 +366,7 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
     // ******************************************************************************** //
 
     #getAttributeStatsActions(groupId: string, actionType: string): Action[] {
-      const stats = (this.actor ? this.actor.system!.stats : game.cof.config.stats) as Record<
+      const stats = (this.actor ? this.actor.system.stats : game.cof.config.stats) as Record<
         string,
         { value: number; mod: number }
       >;
@@ -462,11 +459,6 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
 
     // ******************************************************************************** //
 
-    #isActiveEffect(obj: unknown): obj is ActiveEffect<CofActor> {
-      // @ts-expect-error parameter is unknown
-      return 'duration' in obj && 'isTemporary' in obj;
-    }
-
     #isItem(obj: unknown): obj is CofItem {
       // @ts-expect-error parameter is unknown
       return obj.type === 'item';
@@ -475,11 +467,6 @@ export function initActionHandler(coreModule: TokenActionHudCoreModule, utils: t
     #isCapacity(obj: unknown): obj is CofItem {
       // @ts-expect-error parameter is unknown
       return obj.type === 'capacity';
-    }
-
-    #isPath(obj: unknown): obj is CofItem {
-      // @ts-expect-error parameter is unknown
-      return obj.type === 'path';
     }
 
     #isWeapon(obj: unknown): obj is CofItem {

@@ -19,23 +19,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.node_version }}
-          cache: yarn
+          #cache: pnpm
+
+      - uses: pnpm/action-setup@v4
 
       - name: Cache modules
         uses: actions/cache@v3
         id: cache-modules
         with:
-          path: .yarn/cache
-          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          path: .pnpm/cache
+          key: ${{ runner.OS }}-pnpm-${{ hashFiles('**/pnpm.json') }}
           restore-keys: |
-            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-pnpm-
             ${{ runner.OS }}-
 
       - name: Install dependencies
-        run: yarn
+        run: pnpm install
 
       - name: Lint
-        run: yarn lint
+        run: pnpm lint
 
   test:
     runs-on: ubuntu-latest
@@ -52,17 +54,17 @@ jobs:
         uses: actions/cache@v3
         id: cache-modules
         with:
-          path: .yarn/cache
-          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          path: .pnpm/cache
+          key: ${{ runner.OS }}-pnpm-${{ hashFiles('**/pnpm.json') }}
           restore-keys: |
-            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-pnpm-
             ${{ runner.OS }}-
 
       - name: Install dependencies
-        run: yarn
+        run: pnpm install
 
       - name: Test
-        run: yarn test:ci
+        run: pnpm test:ci
 
   typecheck:
     runs-on: ubuntu-latest
@@ -79,17 +81,17 @@ jobs:
         uses: actions/cache@v3
         id: cache-modules
         with:
-          path: .yarn/cache
-          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          path: .pnpm/cache
+          key: ${{ runner.OS }}-pnpm-${{ hashFiles('**/pnpm.json') }}
           restore-keys: |
-            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-pnpm-
             ${{ runner.OS }}-
 
       - name: Install dependencies
-        run: yarn
+        run: pnpm install
 
       - name: Typecheck
-        run: yarn typecheck
+        run: pnpm typecheck
 
   build:
     runs-on: ubuntu-latest
@@ -102,25 +104,27 @@ jobs:
         with:
           node-version: ${{ env.node_version }}
 
+      - uses: pnpm/action-setup@v4
+
       - name: Cache modules
         uses: actions/cache@v3
         id: cache-modules
         with:
-          path: .yarn/cache
-          key: ${{ runner.OS }}-yarn-${{ hashFiles('**/yarn.json') }}
+          path: .pnpm/cache
+          key: ${{ runner.OS }}-pnpm-${{ hashFiles('**/pnpm.json') }}
           restore-keys: |
-            ${{ runner.OS }}-yarn-
+            ${{ runner.OS }}-pnpm-
             ${{ runner.OS }}-
 
       - name: Install dependencies
-        run: yarn
+        run: pnpm install
 
       - name: Extract tag version number
         id: get_version
         uses: battila7/get-version-action@v2
 
       - name: Build
-        run: yarn build
+        run: pnpm build
 
       - name: Substitute Manifest and Download Links For Versioned Ones
         id: sub_manifest_link_version
